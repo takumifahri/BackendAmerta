@@ -32,6 +32,11 @@ model User {
   langitude Float?
   latitude  Float?
   
+  // Status
+  is_verified Boolean @default(false)
+  login_attempt Int @default(0)
+  last_login DateTime?
+  
   // Relation
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
