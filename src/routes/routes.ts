@@ -1,13 +1,6 @@
 import type { Application } from 'express';
 import auth_router from './auth.routes.js';
-// import contact_router from './user/contact.routes.js';
-// import material_router from './admin/materials.routes.js';
-// import admin_user_router from './admin/user.routes.js';
-// import custom_order_router from './user/custom_order.routes.js';
-// import transaction_router from './user/transaction.routes.js';
-// import custom_order_management_router from './admin/custom_order.management.routes.js';
-// import model_baju_management_router from './admin/model_baju.management.routes.js';
-// import profileRouter from './auth/profile.routes.js';
+import profile_router from './profile.routes.js';
 // import kategori_model_baju_management_router from './admin/kategori_model_baju.management.routes.js';
 // import passwordRouter from './auth/password.routes.js';
 // import dashboard_router from './admin/dashboard.routes.js';
@@ -37,10 +30,10 @@ const groupedRoutes: Record<string, RouteGroup> = {
             path: '/auth',
             router: auth_router,
         },
-        // profile: {
-        //     path: '/profile',
-        //     router: profileRouter,
-        // },
+        profile: {
+            path: '/profile',
+            router: profile_router,
+        },
         // contacts: {
         //     path: '/contacts',
         //     router: contact_router,

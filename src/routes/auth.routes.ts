@@ -97,12 +97,8 @@ import AuthController from '../controller/auth.controller.js';
  *     VerifyOTPRequest:
  *       type: object
  *       required:
- *         - verificationToken
  *         - otp
  *       properties:
- *         verificationToken:
- *           type: string
- *           description: The token returned from register step
  *         otp:
  *           type: string
  *           example: "123456"

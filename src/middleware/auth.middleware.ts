@@ -7,7 +7,7 @@ export const UserRoles: Role[] = ["User"];
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: number; role?: Role | undefined };
+      user?: { userId: string; role?: string | undefined };
     }
   }
 }
@@ -25,7 +25,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     const payload = JWTUtils.verifyToken(token, secret) as any;
     if (!payload || !payload.userId) return res.status(401).json({ message: "Invalid token" });
 
-    req.user = { id: Number(payload.userId), role: payload.role as Role | undefined };
+    req.user = { userId: payload.userId, role: payload.role };
     next();
   } catch (err) {
     return res.status(401).json({ message: "Unauthorized" });

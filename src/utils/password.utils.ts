@@ -21,4 +21,8 @@ export class PasswordUtils {
     static async verifyPassword(hash: string, password: string): Promise<boolean> {
         return await argon2.verify(hash, password);
     }
+
+    static async comparePassword(hash: string, password: string): Promise<boolean> {
+        return await argon2.verify(hash, password);
+    }
 }

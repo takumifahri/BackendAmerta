@@ -14,11 +14,12 @@ import logger from "../utils/logger.utils.js";
 import * as jwt from 'jsonwebtoken';
 import { UserRepository } from "../repository/auth.repository.js";
 import { PasswordUtils } from "../utils/password.utils.js";
-import MailerService from "../mailer.service.js";
+import { Mailers } from "../mailer.service.js";
 
 class AuthService implements IAuthService {
-    private userRepository = new UserRepository();
-
+    constructor(
+        private userRepository: UserRepository = new UserRepository()   
+    ) {}
     /**
      * Register: Create a stateless verification token (JWT) containing registration data and hashed OTP.
      * Sending OTP via email is handled here.
@@ -54,7 +55,7 @@ class AuthService implements IAuthService {
 
         // Send OTP email
         try {
-            await MailerService.sendOTPEmail(email, otp, new Date(Date.now() + 10 * 60 * 1000));
+            await Mailers.auth.sendOTPEmail(email, otp, new Date(Date.now() + 10 * 60 * 1000));
             logger.info('OTP sent via email', { email });
         } catch (mailErr) {
             logger.error('Failed to send OTP email', { email, error: String(mailErr) });
