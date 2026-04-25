@@ -111,4 +111,4 @@ Once the server is running, you can access the interactive API documentation at:
 -   `npm run prisma:studio`: Open Prisma Studio to manage your database visually.
 
 ---
-Built with ❤️ by [takumifahri](https://github.com/takumifahri)
+Built with ❤️ by [kalo menang diteraktir mi ayam pakde ngawi](https://github.com/takumifahri)
