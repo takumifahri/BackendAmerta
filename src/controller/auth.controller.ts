@@ -1,12 +1,23 @@
 import type { Request, Response, NextFunction } from "express";
-import AuthService from "../../services/auth/auth.service.js";
-import type { RegisterRequest, VerifyOTPRequest } from "../../interfaces/auth.interface.js";
+import AuthService from "../service/auth.service.js";
+import type { RegisterRequest, VerifyOTPRequest } from "../interface/auth.interface.js";
 
 const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const data: RegisterRequest = req.body;
         const result = await AuthService.register(data);
-        res.status(200).json(result);
+
+        // Set verification token in cookie
+        res.cookie('verificationToken', result.verificationToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            maxAge: 10 * 60 * 1000 // 10 minutes
+        });
+
+        // Remove token from response body
+        const { verificationToken, ...responseBody } = result;
+        res.status(200).json(responseBody);
     } catch (error) {
         next(error);
     }
@@ -14,16 +25,17 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 
 const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { verificationId, otp }: VerifyOTPRequest = req.body;
-        const result = await AuthService.verifyOTP(verificationId, otp);
+        const { otp }: VerifyOTPRequest = req.body;
+        const verificationToken = req.body.verificationToken || req.cookies?.verificationToken;
+
+        if (!verificationToken) {
+            return res.status(400).json({ message: 'Verification token is missing or expired' });
+        }
+
+        const result = await AuthService.verifyOTP(verificationToken, otp);
         
-        // // Set cookie if needed
-        // res.cookie('accessToken', result.token, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === 'production',
-        //     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        // });
+        // Clear the verification cookie after successful verification
+        res.clearCookie('verificationToken');
 
         res.status(201).json(result);
     } catch (error) {

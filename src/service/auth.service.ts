@@ -15,15 +15,13 @@ import * as jwt from 'jsonwebtoken';
 import { UserRepository } from "../repository/auth.repository.js";
 import { PasswordUtils } from "../utils/password.utils.js";
 import MailerService from "../mailer.service.js";
-import { OTPRepository } from "../repository/otp.repository.js";
 
 class AuthService implements IAuthService {
     private userRepository = new UserRepository();
-    private otpRepository = new OTPRepository();
 
     /**
-     * Register: Create verification record with hashed password + OTP, send email
-     * Returns verificationId for client to use in verify step
+     * Register: Create a stateless verification token (JWT) containing registration data and hashed OTP.
+     * Sending OTP via email is handled here.
      */
     async register(data: RegisterRequest): Promise<RegisterResponse> {
         const { email, name, password, address, phone } = data;
@@ -34,122 +32,75 @@ class AuthService implements IAuthService {
             throw new HttpException(409, 'Email already registered');
         }
 
-        // Rate limit check (prevent spam)
-        const existingVerif = await this.otpRepository.getVerificationByEmail(email);
-        if (existingVerif && existingVerif.createdAt) {
-            const timeSinceLastRequest = Date.now() - new Date(existingVerif.createdAt).getTime();
-            if (timeSinceLastRequest < 60_000) { // 60 seconds
-                throw new HttpException(429, 'Please wait before requesting another OTP');
-            }
-        }
-
-        // Generate OTP and hash everything
+        // Generate OTP and hash it
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
         const hashedOtp = await PasswordUtils.hashPassword(otp);
         const hashedPassword = await PasswordUtils.hashPassword(password);
 
-        // Store verification record (includes all registration data)
-        const verification = await this.otpRepository.createVerification({
-            email,
-            hashedOtp,
-            expiresAt: otpExpiry,
-            hashedPassword,
-            name,
-            address: address || null,
-            phone: phone || null
-        });
+        // Generate stateless verification token (JWT)
+        // This token contains all data needed to create the user once OTP is verified
+        const verificationToken = JWTUtils.generateToken(
+            {
+                email,
+                name,
+                password: hashedPassword,
+                address: address || null,
+                phone: phone || null,
+                hashedOtp
+            },
+            process.env.OTP_JWT_SECRET || 'otp-secret-key',
+            '10m' // OTP valid for 10 minutes
+        );
 
-        // Send OTP email (use plain OTP in email)
+        // Send OTP email
         try {
-            await MailerService.sendOTPEmail(email, otp, otpExpiry);
+            await MailerService.sendOTPEmail(email, otp, new Date(Date.now() + 10 * 60 * 1000));
+            logger.info('OTP sent via email', { email });
         } catch (mailErr) {
-            // Cleanup verification if email fails
-            await this.otpRepository.deleteVerification(verification.id);
             logger.error('Failed to send OTP email', { email, error: String(mailErr) });
             throw new HttpException(500, 'Failed to send verification email');
         }
 
-        logger.info('Registration OTP sent', { email, verificationId: verification.id });
-
         return {
-            verificationId: verification.id,
-            message: 'OTP sent to email. Please verify within 5 minutes.'
+            verificationToken,
+            message: 'OTP sent to email. Please verify within 10 minutes.'
         };
     }
 
     /**
-     * Verify OTP: Validate OTP, create user from stored data, cleanup verification
+     * Verify OTP: Validate OTP against the hashed value inside the verification token.
+     * If valid, create the user in the database.
      */
-    async verifyOTP(verificationId: number, otpPlain: string): Promise<VerifyOTPResponse> {
-        // Get verification record
-        const verification = await this.otpRepository.getVerificationById(verificationId);
+    async verifyOTP(verificationToken: string, otpPlain: string): Promise<VerifyOTPResponse> {
+        // Decode and verify the verification token
+        const payload = JWTUtils.verifyToken(verificationToken, process.env.OTP_JWT_SECRET || 'otp-secret-key') as any;
 
-        if (!verification) {
-            throw new HttpException(404, 'Verification not found or already used');
+        if (!payload) {
+            throw new HttpException(401, 'Invalid or expired verification token. Please register again.');
         }
 
-        // Check if expired
-        if (new Date() > new Date(verification.expires_at)) {
-            await this.otpRepository.deleteVerification(verification.id);
-            throw new HttpException(410, 'OTP expired. Please request a new one.');
-        }
-
-        // Check if already used
-        if (verification.used) {
-            throw new HttpException(400, 'OTP already used');
-        }
-
-        // Check max attempts (optional security)
-        if (verification.attempts >= 5) {
-            await this.otpRepository.deleteVerification(verification.id);
-            throw new HttpException(429, 'Too many failed attempts. Please request a new OTP.');
-        }
+        const { email, name, password, address, phone, hashedOtp } = payload;
 
         // Verify OTP hash
-        const isOTPValid = await PasswordUtils.verifyPassword(verification.otp_token, otpPlain);
-
+        const isOTPValid = await PasswordUtils.verifyPassword(hashedOtp, otpPlain);
         if (!isOTPValid) {
-            // Increment failed attempts
-            await this.otpRepository.incrementAttempts(verification.id);
             throw new HttpException(401, 'Invalid OTP');
         }
 
-        // Check if email was already registered (race condition protection)
-        const existingUser = await this.userRepository.findByEmail(verification.email);
+        // Double check if email was already registered (concurrency protection)
+        const existingUser = await this.userRepository.findByEmail(email);
         if (existingUser) {
-            await this.otpRepository.deleteVerification(verification.id);
             throw new HttpException(409, 'Email already registered');
         }
 
-        // Create user with stored data (password already hashed)
+        // Create user with stored data (password was already hashed during registration)
         const user = await this.userRepository.createUser({
-            email: verification.email,
-            password: verification.hashed_password, // already hashed
-            name: verification.name,
-            address: verification.address,
-            phone: verification.phone,
-            roleId: 2 // User role
+            email,
+            password, // already hashed
+            name,
+            address,
+            phone,
         });
-
-        // Mark verification as used and cleanup
-        await this.otpRepository.markAsUsed(verification.id);
-
-        // // Generate JWT token for auto-login
-        // const secret = process.env.JWT_SECRET || 'your-secret-key';
-        // const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-
-        // const token = JWTUtils.generateToken(
-        //     {
-        //         userId: user.id,
-        //         name: user.name,
-        //         email: user.email,
-        //         role: user.role.name,
-        //         tokenVersion: user.token_version
-        //     },
-        //     secret,
-        //     expiresIn as jwt.SignOptions['expiresIn']
-        // );
 
         logger.info('User registered and verified successfully', {
             userId: user.id,
@@ -157,17 +108,16 @@ class AuthService implements IAuthService {
         });
 
         return {
-            // token,
             user: {
                 id: user.id,
-                uuid: user.unique_id,
+                // uuid: user.id,
                 email: user.email,
                 name: user.name,
                 address: user.address,
                 phone: user.phone,
                 role: {
-                    id: user.role.id,
-                    name: user.role.name
+                    id: 2,
+                    name: user.role
                 },
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt
@@ -176,96 +126,29 @@ class AuthService implements IAuthService {
     }
 
     /**
-     * Resend OTP: Generate new OTP for existing verification
+     * Resend OTP: In a stateless flow, "resend" requires the user to submit their registration data again.
+     * For better UX, we could potentially accept the old token and issue a new one if it hasn't expired yet.
      */
     async resendOTP(email: string): Promise<{ message: string }> {
-        // Get latest verification (even if expired)
-        const oldVerification = await this.otpRepository.getLatestVerificationByEmail(email);
-
-        if (!oldVerification) {
-            throw new HttpException(
-                404,
-                'No pending verification found for this email. Please register again.'
-            );
-        }
-
-        // Rate limit check (prevent spam)
-        const timeSinceCreated = Date.now() - new Date(oldVerification.createdAt).getTime();
-        if (timeSinceCreated < 60_000) { // 60 seconds
-            const remainingSeconds = Math.ceil((60_000 - timeSinceCreated) / 1000);
-            throw new HttpException(
-                429,
-                `Please wait ${remainingSeconds} seconds before requesting another OTP`
-            );
-        }
-
-        // Generate NEW OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-        const hashedOtp = await PasswordUtils.hashPassword(otp);
-
-        // Create NEW verification record with COPIED data from old record
-        const newVerification = await this.otpRepository.createVerification({
-            email: oldVerification.email,
-            hashedOtp,
-            expiresAt: otpExpiry,
-            hashedPassword: oldVerification.hashed_password, // COPY from old
-            name: oldVerification.name,                      // COPY from old
-            address: oldVerification.address,                // COPY from old
-            phone: oldVerification.phone                     // COPY from old
-        });
-
-        // Mark old verification as used/deleted (cleanup)
-        await this.otpRepository.markAsUsed(oldVerification.id);
-
-        // Send NEW OTP email
-        try {
-            await MailerService.sendOTPEmail(email, otp, otpExpiry);
-        } catch (mailErr) {
-            // Cleanup new verification if email fails
-            await this.otpRepository.deleteVerification(newVerification.id);
-            logger.error('Failed to resend OTP email', { email, error: String(mailErr) });
-            throw new HttpException(500, 'Failed to send OTP email');
-        }
-
-        logger.info('OTP resent (new record created)', {
-            email,
-            oldVerificationId: oldVerification.id,
-            newVerificationId: newVerification.id
-        });
-
-        return {
-            message: 'New OTP sent to email. Please check your inbox and verify within 5 minutes.'
-        };
+        // In a strictly stateless flow with no DB/Cache, we can't 'resend' based on email alone
+        // because we don't store the registration details. 
+        // Suggesting the user to register again or providing a more stateful resend if needed.
+        throw new HttpException(400, 'Stateless resend not supported by email alone. Please re-register.');
     }
 
     /**
      * Login: Validate credentials, return token
      */
     async login(email: string, passwordPlain: string): Promise<LoginResponse> {
-        logger.debug('Login attempt', { email });
-
         const user = await this.userRepository.findByEmail(email);
 
         if (!user) {
-            logger.warn('Login failed: user not found', { email });
             throw new HttpException(401, "Invalid email or password");
-        }
-
-        // Check login attempts for security
-        const loginAttempts = await this.userRepository.getLoginAttempts(email);
-        if (loginAttempts > 0 && loginAttempts % 5 === 0) {
-            await MailerService.sendWarningEmail(
-                email,
-                'Security Alert',
-                `We detected ${loginAttempts} failed login attempts on your account.`
-            );
         }
 
         // Verify password
         const isPasswordValid = await PasswordUtils.verifyPassword(user.password, passwordPlain);
         if (!isPasswordValid) {
-            logger.warn('Login failed: invalid password', { email });
             await prisma.user.update({
                 where: { email },
                 data: { login_attempt: { increment: 1 } }
@@ -273,10 +156,10 @@ class AuthService implements IAuthService {
             throw new HttpException(401, "Invalid email or password");
         }
 
-        // Reset login attempts on successful login
+        // Reset login attempts
         await this.userRepository.resetLoginAttempts(user.id);
 
-        // Generate JWT
+        // Generate session JWT
         const secret = process.env.JWT_SECRET || 'your-secret-key';
         const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
 
@@ -285,31 +168,24 @@ class AuthService implements IAuthService {
                 userId: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role.name,
-                tokenVersion: user.token_version
+                role: user.role
             },
             secret,
             expiresIn as jwt.SignOptions['expiresIn']
         );
 
-        logger.info('User logged in successfully', {
-            userId: user.id,
-            email: user.email,
-            role: user.role.name
-        });
-
         return {
             token,
             user: {
                 id: user.id,
-                uuid: user.unique_id,
+                // uuid: user.id,
                 email: user.email,
                 name: user.name,
                 address: user.address,
                 phone: user.phone,
                 role: {
-                    id: user.role.id,
-                    name: user.role.name
+                    id: 2,
+                    name: user.role
                 },
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt
@@ -330,22 +206,17 @@ class AuthService implements IAuthService {
             const user = await this.userRepository.findById(payload.userId);
             if (!user) return null;
 
-            // Check token version (for logout/revoke)
-            if (payload.tokenVersion !== user.token_version) {
-                return null;
-            }
-
             return {
                 user: {
                     id: user.id,
-                    uuid: user.unique_id,
+                    // uuid: user.id,
                     email: user.email,
                     name: user.name,
                     address: user.address,
                     phone: user.phone,
                     role: {
-                        id: user.role.id,
-                        name: user.role.name
+                        id: 2,
+                        name: user.role
                     },
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt
@@ -357,27 +228,10 @@ class AuthService implements IAuthService {
     }
 
     /**
-     * Logout: Invalidate token by incrementing token version
+     * Logout: Handled client-side for stateless JWT, but could involve blacklisting.
      */
     async logout(token: string): Promise<void> {
-        if (!token) {
-            throw new HttpException(400, "No token provided");
-        }
-
-        try {
-            const payload = JWTUtils.verifyToken(
-                token,
-                process.env.JWT_SECRET || 'your-secret-key'
-            ) as any;
-
-            if (payload?.userId) {
-                await this.userRepository.incrementTokenVersion(payload.userId);
-                logger.info('User logged out', { userId: payload.userId });
-            }
-        } catch (error) {
-            // Token invalid or expired - that's okay for logout
-            logger.debug('Logout with invalid token', { error });
-        }
+        // Stateless logout usually means just deleting the token on the client.
     }
 }
 

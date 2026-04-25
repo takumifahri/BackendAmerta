@@ -1,7 +1,7 @@
 import { Router } from 'express';
 // import { validateLogin, validateRegister } from '../validator/auth.validator.js';
 import { validateLogin, validateRegister } from '../validator/auth.validator.js';
-const router = Router();
+const auth_router = Router();
 import AuthController from '../controller/auth.controller.js';
 /**
  * @swagger
@@ -11,11 +11,11 @@ import AuthController from '../controller/auth.controller.js';
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *           description: User ID
- *         unique_id:
  *           type: string
- *           description: Unique identifier (CUID)
+ *           description: User ID (UUID)
+ *         uuid:
+ *           type: string
+ *           description: Unique identifier (UUID)
  *         name:
  *           type: string
  *           description: User full name
@@ -90,9 +90,22 @@ import AuthController from '../controller/auth.controller.js';
  *       properties:
  *         message:
  *           type: string
- *           example: User registered successfully
- *         user:
- *           $ref: '#/components/schemas/User'
+ *           example: OTP sent to email. Please verify within 10 minutes.
+ *         verificationToken:
+ *           type: string
+ *           description: Stateless verification JWT
+ *     VerifyOTPRequest:
+ *       type: object
+ *       required:
+ *         - verificationToken
+ *         - otp
+ *       properties:
+ *         verificationToken:
+ *           type: string
+ *           description: The token returned from register step
+ *         otp:
+ *           type: string
+ *           example: "123456"
  *     Error:
  *       type: object
  *       properties:
@@ -113,7 +126,7 @@ import AuthController from '../controller/auth.controller.js';
  * @swagger
  * /api/auth/register:
  *   post:
- *     summary: Register a new user
+ *     summary: Register a new user (Sends OTP)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -122,26 +135,18 @@ import AuthController from '../controller/auth.controller.js';
  *           schema:
  *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
- *       201:
- *         description: User registered successfully
+ *       200:
+ *         description: OTP sent successfully
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/RegisterResponse'
  *       400:
  *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       409:
  *         description: Email already registered
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', validateRegister, AuthController.register);
+auth_router.post('/register', validateRegister, AuthController.register);
 
 /**
  * @swagger
@@ -164,12 +169,8 @@ router.post('/register', validateRegister, AuthController.register);
  *               $ref: '#/components/schemas/LoginResponse'
  *       401:
  *         description: Invalid credentials
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', validateLogin, AuthController.login);
+auth_router.post('/login', validateLogin, AuthController.login);
 
 /**
  * @swagger
@@ -180,82 +181,35 @@ router.post('/login', validateLogin, AuthController.login);
  *     responses:
  *       200:
  *         description: Logged out successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Logged out successfully
  */
-router.post('/logout', AuthController.logout);
-
-/**
- * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register new user (sends OTP)
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *               - name
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               name:
- *                 type: string
- *               address:
- *                 type: string
- *               phone:
- *                 type: string
- *     responses:
- *       200:
- *         description: OTP sent
- */
-router.post("/register", AuthController.register);
+auth_router.post('/logout', AuthController.logout);
 
 /**
  * @swagger
  * /api/auth/verify-otp:
  *   post:
  *     summary: Verify OTP and create user
- *     tags: [Auth]
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - verificationId
- *               - otp
- *             properties:
- *               verificationId:
- *                 type: number
- *               otp:
- *                 type: string
+ *             $ref: '#/components/schemas/VerifyOTPRequest'
  *     responses:
  *       201:
- *         description: User created
+ *         description: User created successfully
+ *       401:
+ *         description: Invalid or expired token/OTP
  */
-router.post("/verify-otp", AuthController.verifyOTP);
+auth_router.post("/verify-otp", AuthController.verifyOTP);
 
 /**
  * @swagger
  * /api/auth/resend-otp:
  *   post:
  *     summary: Resend OTP
- *     tags: [Auth]
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -270,8 +224,10 @@ router.post("/verify-otp", AuthController.verifyOTP);
  *     responses:
  *       200:
  *         description: OTP resent
+ *       400:
+ *         description: Not supported in stateless flow (requires re-register)
  */
-router.post("/resend-otp", AuthController.resendOTP);
+auth_router.post("/resend-otp", AuthController.resendOTP);
 
 /**
  * @swagger
@@ -284,20 +240,9 @@ router.post("/resend-otp", AuthController.resendOTP);
  *     responses:
  *       200:
  *         description: Current user data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  */
-router.get('/me', AuthController.me);
+auth_router.get('/me', AuthController.me);
 
-export default router;
+export default auth_router;

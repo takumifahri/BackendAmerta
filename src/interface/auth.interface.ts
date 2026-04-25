@@ -1,7 +1,7 @@
 import type { ApiResponse } from "./base.interface.js"
 
 // DTO and Interfaces
-enum Role {
+export enum Role {
     ADMIN = 'ADMIN',
     USER = 'USER',
     COMPANY = 'COMPANY'
@@ -13,7 +13,7 @@ export interface loginRequest {
 }
 
 // For OTP Sendng email
-export interface registerRequest {
+export interface RegisterRequest {
     name : string,
     email: string,
     password : string,
@@ -41,41 +41,51 @@ export interface CompanyAuthResponse {
     website? : string,
     description? : string,
 }
-export interface UserAuthResponse { 
+
+export interface UserResponse { 
     id : string,
-    email : string,
-    role : Role,
-    phone? : string,
-    address? : string,
-    
-    langitude? : number,
-    latitude? : number,
-
-    companyData? : CompanyAuthResponse[]
-
-    createdAt : Date,
-    updatedAt? : Date,
+    // uuid : string;
+    email : string;
+    name : string;
+    phone? : string | null;
+    address? : string | null;
+    role : {
+        id: number;
+        name: string;
+    };
+    createdAt : Date;
+    updatedAt? : Date | null;
 }
+
 export interface RegisterResponse {
-    verificationId: number;
+    verificationToken?: string;
     message: string;
 }
 
 export interface VerifyOTPRequest {
-    verificationId: number;
+    verificationToken?: string;
     otp: string;
 }
+
 export interface VerifyOTPResponse {
-    user: UserAuthResponse;
+    user: UserResponse;
+    token?: string;
 }
 
 export interface ResendOTPRequest {
     email: string;
 }
-export interface AuthInterface {
-    login(request: loginRequest): Promise<ApiResponse<UserAuthResponse>>
-    register(request: registerRequest): Promise<ApiResponse<RegisterResponse>>
-    verifyOTP(request: VerifyOTPRequest): Promise<ApiResponse<UserAuthResponse>>
-    resendOTP(request: ResendOTPRequest): Promise<ApiResponse<{ message: string }>>
+
+export interface LoginResponse {
+    token: string;
+    user: UserResponse;
+}
+
+export interface IAuthService {
+    login(email: string, passwordPlain: string): Promise<LoginResponse>;
+    register(data: RegisterRequest): Promise<RegisterResponse>;
+    verifyOTP(verificationToken: string, otpPlain: string): Promise<VerifyOTPResponse>;
+    resendOTP(email: string): Promise<{ message: string }>;
     logout(token: string): Promise<void>;
+    verifyToken(token: string): Promise<{ user: UserResponse } | null>;
 }

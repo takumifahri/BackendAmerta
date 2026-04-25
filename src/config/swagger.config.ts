@@ -4,12 +4,12 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'JR Konveksi API',
+      title: 'Amerta API',
       version: '1.0.0',
-      description: 'API documentation for JR Konveksi Express.js backend',
+      description: 'API documentation for Amerta Express.js backend',
       contact: {
-        name: 'JR Konveksi Team',
-        email: 'support@jrkonveksi.com',
+        name: 'Amerta Team',
+        email: 'support@amerta.com',
       },
       license: {
         name: 'ISC',

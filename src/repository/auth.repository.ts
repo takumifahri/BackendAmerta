@@ -54,7 +54,7 @@ export class UserRepository implements IUserRepository {
             // include: { role: true }
         });
     }
-    
+
     async getLoginAttempts(email: string): Promise<number> {
         const user = await prisma.user.findUnique({
             where: { email },
