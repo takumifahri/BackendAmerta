@@ -9,10 +9,10 @@ export async function companySeed() {
 
     // 1. Create a Company
     const company = await prisma.company.upsert({
-        where: { id: "comp-1" }, // Using a fixed ID for consistent seeding
+        where: { id: "759ed1e0-2d7c-43b0-8178-0b3d003e230c" }, // Using a fixed UUID for consistent seeding
         update: {},
         create: {
-            id: "comp-1",
+            id: "759ed1e0-2d7c-43b0-8178-0b3d003e230c",
             name: "Amerta Corp",
             email: "info@amertacorp.com",
             address: "Jakarta Selatan, Indonesia",
