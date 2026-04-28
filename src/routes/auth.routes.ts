@@ -241,4 +241,18 @@ auth_router.post("/resend-otp", AuthController.resendOTP);
  */
 auth_router.get('/me', AuthController.me);
 
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid refresh token
+ */
+auth_router.post('/refresh', AuthController.refresh);
+
 export default auth_router;

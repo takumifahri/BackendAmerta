@@ -18,8 +18,8 @@ import { Mailers } from "../mailer.service.js";
 
 class AuthService implements IAuthService {
     constructor(
-        private userRepository: UserRepository = new UserRepository()   
-    ) {}
+        private userRepository: UserRepository = new UserRepository()
+    ) { }
     /**
      * Register: Create a stateless verification token (JWT) containing registration data and hashed OTP.
      * Sending OTP via email is handled here.
@@ -108,21 +108,44 @@ class AuthService implements IAuthService {
             email: user.email
         });
 
+        // Generate tokens
+        const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const refreshTokenSecret = process.env.REFRESH_JWT_SECRET || 'your-refresh-secret-key';
+        const refreshTokenExpiresIn = process.env.REFRESH_JWT_EXPIRES_IN || '7d';
+
+        const token = JWTUtils.generateToken(
+            { userId: user.id, name: user.name, email: user.email, role: user.role },
+            accessTokenSecret,
+            accessTokenExpiresIn as jwt.SignOptions['expiresIn']
+        );
+
+        const refreshToken = JWTUtils.generateToken(
+            { userId: user.id },
+            refreshTokenSecret,
+            refreshTokenExpiresIn as jwt.SignOptions['expiresIn']
+        );
+
+        // Store refresh token
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { refreshToken }
+        });
+
         return {
             user: {
                 id: user.id,
-                // uuid: user.id,
                 email: user.email,
-                name: user.name,
+                name: user.name ?? "",
+                profilePicture: user.profilePicture,
                 address: user.address,
                 phone: user.phone,
-                role: {
-                    id: 2,
-                    name: user.role
-                },
+                role: { id: 2, name: user.role },
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt
-            }
+            },
+            token,
+            refreshToken
         };
     }
 
@@ -157,12 +180,20 @@ class AuthService implements IAuthService {
             throw new HttpException(401, "Invalid email or password");
         }
 
+        // Set user to active after successful login
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { is_active: true, last_login: new Date() }
+        });
+
         // Reset login attempts
         await this.userRepository.resetLoginAttempts(user.id);
 
-        // Generate session JWT
-        const secret = process.env.JWT_SECRET || 'your-secret-key';
-        const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+        // Generate session tokens
+        const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const refreshTokenSecret = process.env.REFRESH_JWT_SECRET || 'your-refresh-secret-key';
+        const refreshTokenExpiresIn = process.env.REFRESH_JWT_EXPIRES_IN || '7d';
 
         const token = JWTUtils.generateToken(
             {
@@ -171,17 +202,30 @@ class AuthService implements IAuthService {
                 email: user.email,
                 role: user.role
             },
-            secret,
-            expiresIn as jwt.SignOptions['expiresIn']
+            accessTokenSecret,
+            accessTokenExpiresIn as jwt.SignOptions['expiresIn']
         );
+
+        const refreshToken = JWTUtils.generateToken(
+            { userId: user.id },
+            refreshTokenSecret,
+            refreshTokenExpiresIn as jwt.SignOptions['expiresIn']
+        );
+
+        // Store refresh token in DB
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { refreshToken }
+        });
 
         return {
             token,
+            refreshToken,
             user: {
                 id: user.id,
-                // uuid: user.id,
                 email: user.email,
-                name: user.name,
+                name: user.name ?? "",
+                profilePicture: user.profilePicture,
                 address: user.address,
                 phone: user.phone,
                 role: {
@@ -212,7 +256,8 @@ class AuthService implements IAuthService {
                     id: user.id,
                     // uuid: user.id,
                     email: user.email,
-                    name: user.name,
+                    name: user.name ?? "",
+                    profilePicture: user.profilePicture,
                     address: user.address,
                     phone: user.phone,
                     role: {
@@ -232,7 +277,50 @@ class AuthService implements IAuthService {
      * Logout: Handled client-side for stateless JWT, but could involve blacklisting.
      */
     async logout(token: string): Promise<void> {
-        // Stateless logout usually means just deleting the token on the client.
+        const payload = JWTUtils.verifyToken(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+        if (!payload?.userId) return;
+        
+        // Clear refresh token from DB
+        await prisma.user.update({
+            where: { id: payload.userId },
+            data: { refreshToken: null, is_active: false }
+        });
+
+        logger.info('User logged out successfully', {
+            userId: payload.userId,
+            email: payload.email
+        });
+    }
+
+    async refresh(refreshToken: string): Promise<{ token: string }> {
+        const secret = process.env.REFRESH_JWT_SECRET || 'your-refresh-secret-key';
+        const payload = JWTUtils.verifyToken(refreshToken, secret) as any;
+
+        if (!payload || !payload.userId) {
+            throw new HttpException(401, "Invalid refresh token");
+        }
+
+        const user = await this.userRepository.findById(payload.userId);
+        if (!user || user.refreshToken !== refreshToken) {
+            throw new HttpException(401, "Invalid refresh token");
+        }
+
+        // Generate new access token
+        const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+
+        const token = JWTUtils.generateToken(
+            {
+                userId: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            },
+            accessTokenSecret,
+            accessTokenExpiresIn as jwt.SignOptions['expiresIn']
+        );
+
+        return { token };
     }
 }
 

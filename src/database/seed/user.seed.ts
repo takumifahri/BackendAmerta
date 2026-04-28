@@ -19,6 +19,7 @@ export async function userSeed() {
             password: hashedPassword,
             role: Role.ADMIN,
             is_verified: true,
+            is_active: false
         },
     });
 
@@ -31,6 +32,7 @@ export async function userSeed() {
             password: hashedPassword,
             role: Role.USER,
             is_verified: true,
+            is_active: false
         },
     });
 
@@ -43,6 +45,7 @@ export async function userSeed() {
             password: hashedPassword,
             role: Role.USER,
             is_verified: true,
+            is_active:false
         },
     });
 

@@ -1,0 +1,33 @@
+name: Deploy Amerta Backend
+
+on:
+  push:
+    branches: [ main ] # Ganti dengan branch utama kamu (misal: main atau master)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}/AmertaBackend
+            
+            # Pull code terbaru
+            git pull origin main
+            
+            # Pastikan env sudah benar
+            # cp .env.example .env (Jika belum ada)
+            
+            # Build dan restart container spesifik backend
+            docker-compose up -d --build backend
+            
+            # Cleanup image lama yang tidak terpakai
+            docker image prune -f
+            
+            echo "🚀 Deployment successfully completed!"

@@ -37,6 +37,22 @@ const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
         // Clear the verification cookie after successful verification
         res.clearCookie('verificationToken');
 
+        if (result.token && result.refreshToken) {
+            res.cookie('accessToken', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                maxAge: 15 * 60 * 1000 // 15 minutes
+            });
+
+            res.cookie('refreshToken', result.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            });
+        }
+
         res.status(201).json(result);
     } catch (error) {
         next(error);
@@ -63,12 +79,20 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const { email, password } = req.body;
         const result = await AuthService.login(email, password);
         
-        // Set cookie
+        // Set access token cookie
         res.cookie('accessToken', result.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        // Set refresh token cookie
+        res.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
         res.status(200).json(result);
@@ -86,6 +110,13 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         res.clearCookie('accessToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/'
+        });
+
+        res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
@@ -121,13 +152,38 @@ const me = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token is missing' });
+        }
+
+        const result = await AuthService.refresh(refreshToken);
+
+        // Set new access token cookie
+        res.cookie('accessToken', result.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
 const AuthController = {
     register,
     verifyOTP,
     resendOTP,
     login,
     logout,
-    me
+    me,
+    refresh
 };
 
 export default AuthController;

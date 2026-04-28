@@ -8,6 +8,8 @@ export interface IChatRepository {
         message: string;
         image?: string | null;
     }): Promise<any>;
+    getMessageById(id: string): Promise<any>;
+    updateMessage(id: string, data: any): Promise<any>;
 }
 
 export class ChatRepository implements IChatRepository {
@@ -38,6 +40,18 @@ export class ChatRepository implements IChatRepository {
                 imageUrl: data.image || null,
                 type: data.image ? 'IMAGE' : 'TEXT'
             }
+        });
+    }
+    async getMessageById(id: string) {
+        return await prisma.message.findUnique({
+            where: { id }
+        });
+    }
+
+    async updateMessage(id: string, data: any) {
+        return await prisma.message.update({
+            where: { id },
+            data
         });
     }
 }

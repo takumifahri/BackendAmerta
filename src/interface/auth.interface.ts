@@ -47,6 +47,7 @@ export interface UserResponse {
     // uuid : string;
     email : string;
     name : string;
+    profilePicture? : string | null;
     phone? : string | null;
     address? : string | null;
     role : {
@@ -70,6 +71,7 @@ export interface VerifyOTPRequest {
 export interface VerifyOTPResponse {
     user: UserResponse;
     token?: string;
+    refreshToken?: string;
 }
 
 export interface ResendOTPRequest {
@@ -78,6 +80,7 @@ export interface ResendOTPRequest {
 
 export interface LoginResponse {
     token: string;
+    refreshToken: string;
     user: UserResponse;
 }
 
@@ -88,4 +91,5 @@ export interface IAuthService {
     resendOTP(email: string): Promise<{ message: string }>;
     logout(token: string): Promise<void>;
     verifyToken(token: string): Promise<{ user: UserResponse } | null>;
+    refresh(refreshToken: string): Promise<{ token: string }>;
 }

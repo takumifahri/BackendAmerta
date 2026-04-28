@@ -2,6 +2,7 @@ import type { Application } from 'express';
 import auth_router from './auth.routes.js';
 import profile_router from './profile.routes.js';
 import chatRouter from './chat.routes.js';
+import community_router from './community.routes.js';
 // import kategori_model_baju_management_router from './admin/kategori_model_baju.management.routes.js';
 // import passwordRouter from './auth/password.routes.js';
 // import dashboard_router from './admin/dashboard.routes.js';
@@ -38,6 +39,10 @@ const groupedRoutes: Record<string, RouteGroup> = {
         chat: {
             path: '/chat',
             router: chatRouter // utes dynamically to avoid circular dependency
+        },
+        community: {
+            path: '/community',
+            router: community_router
         },
         // contacts: {
         //     path: '/contacts',

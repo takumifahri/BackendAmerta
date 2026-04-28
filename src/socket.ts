@@ -189,6 +189,28 @@ export const initSocket = (httpServer: HttpServer) => {
             }
         });
 
+        // Mark as read handler
+        socket.on('mark_as_read', async (payload: { roomId: string; messageId: string }) => {
+            try {
+                const result = await chatService.isRead({
+                    roomId: payload.roomId,
+                    messageId: payload.messageId,
+                    userId: socket.data.userId,
+                    isRead: true
+                });
+
+                if (result.success) {
+                    io.to(payload.roomId).emit('message_read', {
+                        roomId: payload.roomId,
+                        messageId: payload.messageId,
+                        userId: socket.data.userId
+                    });
+                }
+            } catch (error) {
+                logger.error('Error in mark_as_read', { error });
+            }
+        });
+
         // Disconnect handler
         socket.on('disconnect', () => {
             // Clean up Redis

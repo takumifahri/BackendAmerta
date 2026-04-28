@@ -2,7 +2,8 @@ import type {
     IChatService,
     ChatRequest,
     ChatResponse,
-    RoomChatResponse
+    RoomChatResponse,
+    isReadRequest
 } from '../interface/chat.interface.js';
 
 import { prisma } from '../database/index.js';
@@ -23,9 +24,11 @@ class ChatService implements IChatService {
             return {
                 roomId,
                 messages: messages.map(msg => ({
+                    id: msg.id,
                     userId: msg.userId,
                     message: msg.content,
                     image: msg.imageUrl || undefined,
+                    isRead: msg.isRead,
                     timestamp: msg.createdAt
                 })),
                 userIds
@@ -82,7 +85,8 @@ class ChatService implements IChatService {
                                         select: {
                                             id: true,
                                             name: true,
-                                            email: true
+                                            email: true,
+                                            is_active: true
                                         }
                                     }
                                 }
@@ -106,6 +110,32 @@ class ChatService implements IChatService {
         } catch (error) {
             logger.error('Error fetching user rooms:', error);
             throw new HttpException(500, 'Failed to fetch user rooms');
+        }
+    }
+
+    async isRead(data: isReadRequest): Promise<ChatResponse> {
+        try {
+            const message = await this.chatRepository.getMessageById(data.messageId);
+            if (!message) {
+                throw new HttpException(404, 'Message not found');
+            }
+            if (message.userId === data.userId) {
+                // User cannot mark their own message as read
+                return {
+                    success: false,
+                    reply: 'Cannot mark own message as read'
+                };
+            }
+            await this.chatRepository.updateMessage(data.messageId, {
+                isRead: true
+            });
+            return {
+                success: true,
+                reply: 'Message marked as read successfully'
+            };
+        } catch (error) {
+            logger.error('Error marking message as read:', error);
+            throw new HttpException(500, 'Failed to mark message as read');
         }
     }
 }

@@ -30,7 +30,8 @@ class ProfileService implements IProfileService {
         return {
             id: user.id,
             email: user.email,
-            name: user.name,
+            name: user.name ?? "",
+            profilePicture: user.profilePicture,
             phone: user.phone,
             address: user.address,
             Role: user.role,
@@ -52,7 +53,8 @@ class ProfileService implements IProfileService {
         return {
             id: updatedUser.id,
             email: updatedUser.email,
-            name: updatedUser.name,
+            name: updatedUser.name ?? "",
+            profilePicture: updatedUser.profilePicture,
             phone: updatedUser.phone,
             address: updatedUser.address,
             Role: updatedUser.role,

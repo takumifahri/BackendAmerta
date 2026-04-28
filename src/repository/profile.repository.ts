@@ -4,6 +4,7 @@ export interface IProfileRepository {
     getProfile(userId: string): Promise<any>;
     updateProfile(userId: string, data: {
         name?: string | null;
+        profilePicture?: string | null;
         phone?: string | null;
         address?: string | null;
         longitude?: number | null; 
@@ -27,6 +28,7 @@ export class ProfileRepository implements IProfileRepository {
 
     async updateProfile(userId: string, data: {
         name?: string | null;
+        profilePicture?: string | null;
         phone?: string | null;
         address?: string | null;
         longitude?: number | null;
@@ -35,6 +37,7 @@ export class ProfileRepository implements IProfileRepository {
         const updateData: Record<string, string | number | null> = {};
 
         if (data.name !== undefined) updateData.name = data.name;
+        if (data.profilePicture !== undefined) updateData.profilePicture = data.profilePicture;
         if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.address !== undefined) updateData.address = data.address;
         if (data.longitude !== undefined) updateData.longitude = data.longitude;

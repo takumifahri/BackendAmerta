@@ -1,9 +1,11 @@
 interface RoomChatResponse {
     roomId: string;
     messages: Array<{
+        id: string;
         userId: string;
         message: string;
         image?: string | null | undefined;
+        isRead: boolean;
         timestamp: Date;
     }>;
     userIds: string[];
@@ -22,11 +24,18 @@ interface ChatResponse {
     image?: string | null | undefined;
 }
 
+interface isReadRequest{
+    userId: string;
+    roomId: string;
+    messageId: string;
+    isRead: boolean;
+}
 interface IChatService {
     getAllMessages(roomId: string): Promise<RoomChatResponse>;
     sendMessage(data: ChatRequest): Promise<ChatResponse>;
     receiveMessage(data: ChatRequest): Promise<ChatResponse>;
     getUserRooms(userId: string): Promise<any[]>;
+    isRead(data: isReadRequest): Promise<ChatResponse>;
 }
 
-export type { ChatRequest, ChatResponse, RoomChatResponse, IChatService };
+export type { ChatRequest, ChatResponse, RoomChatResponse, IChatService, isReadRequest };

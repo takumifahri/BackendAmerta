@@ -6,6 +6,7 @@ interface UserProfileResponse {
     id : string,
     email : string,
     name : string,
+    profilePicture? : string | null,
     phone? : string | null,
     address? : string | null,
     Role : Role,
@@ -24,12 +25,13 @@ interface UserProfileResponse {
 
 interface updateProfileRequest {
     name? : string,
+    profilePicture? : string,
     phone? : string,
     address? : string,
 
     // Detail Landmark
-    longitude? : number ,
-    latitude? : number,
+    longitude? : number | null,
+    latitude? : number | null,
 }
 
 // Change password if user remember old password

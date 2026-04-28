@@ -14,6 +14,7 @@ export interface IUserRepository {
     findById(id: string): Promise<any>;
     getLoginAttempts(email: string): Promise<number>;
     resetLoginAttempts(userId: string): Promise<void>;
+    logoutSession(userId: string): Promise<void>;
     // incrementTokenVersion(userId: string): Promise<void>;
 }
 
@@ -70,6 +71,12 @@ export class UserRepository implements IUserRepository {
         });
     }
 
+    async logoutSession(userId: string) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: { is_active: false }
+        });
+    }   
     // async incrementTokenVersion(userId: string) {
     //     await prisma.user.update({
     //         where: { id: userId },

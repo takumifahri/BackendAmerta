@@ -33,21 +33,25 @@ enum MessageType {
 
 model User {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(USER)
-  phone     String?
-  address   String?
-
-  // Lokasi
-  longitude Float?
-  latitude  Float?
+  email          String   @unique
+  password       String
+  name           String?
+  profilePicture String?
+  
+  // Location
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  
+  role           Role     @default(USER)
+  phone          String?
   
   // Status
+  is_active Boolean @default(false)
   is_verified Boolean @default(false)
   login_attempt Int @default(0)
   last_login DateTime?
+  refreshToken String? @unique
   
   // Relation
   companyId String?
@@ -56,6 +60,10 @@ model User {
   // Chat
   rooms     RoomUser[]
   messages  Message[]
+
+  // Community
+  communityPosts CommunityPost[]
+  communityComments Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
@@ -83,17 +91,16 @@ model Company {
 model ChatRoom {
   id            String      @id @default(uuid())
   type          RoomType
-    createdAt DateTime @default(now())
-  updatedAt DateTime? @updatedAt
-  deletedAt DateTime?
 
   users         RoomUser[]
   messages      Message[]
 
   lastMessage   String?
   lastMessageAt DateTime?
-
-
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
 }
 
 model RoomUser {
@@ -130,4 +137,53 @@ model Message {
 
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
+}
+
+model CommunityPost {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  type      PostType @default(EDUCATION)
+  
+  // Geolocation
+  latitude  Float?
+  longitude Float?
+  
+  images    PostImage[]
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  comments  Comment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PostImage {
+  id        String   @id @default(uuid())
+  url       String
+  
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PostType {
+  EDUCATION
+  EXCHANGE
+  ANNOUNCEMENT
 }
