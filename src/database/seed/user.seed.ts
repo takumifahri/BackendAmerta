@@ -34,5 +34,17 @@ export async function userSeed() {
         },
     });
 
+    const fahri = await prisma.user.upsert({
+        where: { email: "fahri.radiansyah@gmail.com" },
+        update: {},
+        create: {
+            email: "fahri.radiansyah@gmail.com",
+            name: "Fahri Radiansyah",
+            password: hashedPassword,
+            role: Role.USER,
+            is_verified: true,
+        },
+    });
+
     console.log("✅ Users seeded.");
 }

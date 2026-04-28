@@ -6,7 +6,7 @@ export interface IProfileRepository {
         name?: string | null;
         phone?: string | null;
         address?: string | null;
-        langitude?: number | null; 
+        longitude?: number | null; 
         latitude?: number | null;
     }): Promise<any>;
     changePassword(userId: string, newPassword: string): Promise<void>;
@@ -29,7 +29,7 @@ export class ProfileRepository implements IProfileRepository {
         name?: string | null;
         phone?: string | null;
         address?: string | null;
-        langitude?: number | null;
+        longitude?: number | null;
         latitude?: number | null;
     }) {
         const updateData: Record<string, string | number | null> = {};
@@ -37,7 +37,7 @@ export class ProfileRepository implements IProfileRepository {
         if (data.name !== undefined) updateData.name = data.name;
         if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.address !== undefined) updateData.address = data.address;
-        if (data.langitude !== undefined) updateData.langitude = data.langitude;
+        if (data.longitude !== undefined) updateData.longitude = data.longitude;
         if (data.latitude !== undefined) updateData.latitude = data.latitude;
 
         return await prisma.user.update({

@@ -19,6 +19,18 @@ enum Role {
 }
 
 
+enum RoomType {
+  USER
+  MARKETPLACE
+  DONATION
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -29,7 +41,7 @@ model User {
   address   String?
 
   // Lokasi
-  langitude Float?
+  longitude Float?
   latitude  Float?
   
   // Status
@@ -40,6 +52,10 @@ model User {
   // Relation
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+
+  // Chat
+  rooms     RoomUser[]
+  messages  Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
@@ -60,6 +76,58 @@ model Company {
   users     User[]
 
   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
+
+model ChatRoom {
+  id            String      @id @default(uuid())
+  type          RoomType
+    createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+
+  users         RoomUser[]
+  messages      Message[]
+
+  lastMessage   String?
+  lastMessageAt DateTime?
+
+
+}
+
+model RoomUser {
+  id      String   @id @default(uuid())
+
+  userId  String
+  roomId  String
+
+  user    User     @relation(fields: [userId], references: [id])
+  room    ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId]) // biar ga dobel join
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
+
+model Message {
+  id        String   @id @default(uuid())
+
+  roomId    String
+  userId    String
+
+  content   String
+  imageUrl  String?
+  type      MessageType @default(TEXT)
+  isRead    Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
   updatedAt DateTime? @updatedAt
   deletedAt DateTime?
 }

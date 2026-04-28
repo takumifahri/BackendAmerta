@@ -1,6 +1,7 @@
 import { prisma } from "../index.js";
 import { userSeed } from "./user.seed.js";
 import { companySeed } from "./company.seed.js";
+import { chatSeed } from "./seed_chat.js";
 
 async function main() {
     console.log("🌱 Starting seeding...");
@@ -8,6 +9,7 @@ async function main() {
     try {
         await userSeed();
         await companySeed();
+        await chatSeed();
         
         console.log("✅ Seeding completed successfully.");
     } catch (error) {

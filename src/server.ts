@@ -1,9 +1,18 @@
 import 'dotenv/config';
+import http from 'http';
 import app from './app.js';
 import { prisma } from './database/index.js';
 import logger from './utils/logger.utils.js';
 import { displayRoutes } from './routes/routes.js';
+import { initSocket } from './socket.js';
+
 const PORT = Number(process.env.PORT) || 3011;
+
+// Create HTTP server for Socket.IO
+const server = http.createServer(app);
+
+// Initialize Socket.IO with Redis
+initSocket(server);
 
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
@@ -20,7 +29,7 @@ const gracefulShutdown = async (signal: string) => {
 };
 
 // Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 Server is running on port ${PORT}`);
   logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
@@ -46,3 +55,5 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
 // Handle termination signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+export { server };

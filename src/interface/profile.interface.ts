@@ -11,7 +11,7 @@ interface UserProfileResponse {
     Role : Role,
 
     // Detail Landmark
-    langitude? : number | null,
+    longitude? : number | null,
     latitude? : number | null,
 
     // Status
@@ -28,7 +28,7 @@ interface updateProfileRequest {
     address? : string,
 
     // Detail Landmark
-    langitude? : number ,
+    longitude? : number ,
     latitude? : number,
 }
 

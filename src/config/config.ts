@@ -55,7 +55,9 @@ export const UPLOAD_CONFIG = {
         CHAT_IMAGE: 'chat-images',
         EXCHANGE_ITEM: 'exchange-items',
         TRANSACTION: 'transactions',
-        PROFILE: 'profiles'
+        PROFILE: 'profiles',
+        DONATION_IMAGES: 'donation-images',
+        COMMUNITY_POST: 'community-post'
     },
     
     // File size limits (in bytes)
@@ -79,10 +81,12 @@ export const UPLOAD_CONFIG = {
 
     // Upload limits
     MAX_FILES: {
-        MODEL_BAJU: 10,
-        CUSTOM_ORDER: 5,
+        DONATION_IMAGES: 10,
+        COMMUNITY_POST: 5,
         TRANSACTION: 3,
-        PROFILE: 1
+        PROFILE: 1,
+        CHAT_IMAGE: 1,
+        EXCHANGE_ITEM: 5
     }
 } as const;
 

@@ -96,15 +96,15 @@ class MulterConfigFactory {
  */
 export const uploadConfigs = {
     // Image uploaders
-    modelBaju: MulterConfigFactory.createImageUploader('MODEL_BAJU'),
-    customOrder: MulterConfigFactory.createImageUploader('CUSTOM_ORDER'),
+    donationImages: MulterConfigFactory.createImageUploader('DONATION_IMAGES'),
+    communityPost: MulterConfigFactory.createImageUploader('COMMUNITY_POST'),
     transaction: MulterConfigFactory.createImageUploader('TRANSACTION'),
     profile: MulterConfigFactory.createImageUploader('PROFILE'),
 
     // Document uploaders (if needed)
     documents: {
-        modelBaju: MulterConfigFactory.createDocumentUploader('MODEL_BAJU'),
-        customOrder: MulterConfigFactory.createDocumentUploader('CUSTOM_ORDER'),
+        donationImages: MulterConfigFactory.createDocumentUploader('DONATION_IMAGES'),
+        communityPost: MulterConfigFactory.createDocumentUploader('COMMUNITY_POST'),
         transaction: MulterConfigFactory.createDocumentUploader('TRANSACTION')
     }
 } as const;
@@ -119,10 +119,10 @@ export class UploadMiddleware {
     static single(category: FileCategory, fieldName: string = 'image') {
         // ✅ Fix: use proper property names
         switch (category) {
-            case 'MODEL_BAJU':
-                return uploadConfigs.modelBaju.single(fieldName);
-            case 'CUSTOM_ORDER':
-                return uploadConfigs.customOrder.single(fieldName);
+            case 'DONATION_IMAGES':
+                return uploadConfigs.donationImages.single(fieldName);
+            case 'COMMUNITY_POST':
+                return uploadConfigs.communityPost.single(fieldName);
             case 'TRANSACTION':
                 return uploadConfigs.transaction.single(fieldName);
             case 'PROFILE':
@@ -140,10 +140,10 @@ export class UploadMiddleware {
 
         // ✅ Fix: use proper property names
         switch (category) {
-            case 'MODEL_BAJU':
-                return uploadConfigs.modelBaju.array(fieldName, maxFiles);
-            case 'CUSTOM_ORDER':
-                return uploadConfigs.customOrder.array(fieldName, maxFiles);
+            case 'DONATION_IMAGES':
+                return uploadConfigs.donationImages.array(fieldName, maxFiles);
+            case 'COMMUNITY_POST':
+                return uploadConfigs.communityPost.array(fieldName, maxFiles);
             case 'TRANSACTION':
                 return uploadConfigs.transaction.array(fieldName, maxFiles);
             case 'PROFILE':
@@ -159,10 +159,10 @@ export class UploadMiddleware {
     static fields(category: FileCategory, fields: { name: string; maxCount?: number }[]) {
         // ✅ Fix: use proper property names
         switch (category) {
-            case 'MODEL_BAJU':
-                return uploadConfigs.modelBaju.fields(fields);
-            case 'CUSTOM_ORDER':
-                return uploadConfigs.customOrder.fields(fields);
+            case 'DONATION_IMAGES':
+                return uploadConfigs.donationImages.fields(fields);
+            case 'COMMUNITY_POST':
+                return uploadConfigs.communityPost.fields(fields);
             case 'TRANSACTION':
                 return uploadConfigs.transaction.fields(fields);
             case 'PROFILE':
