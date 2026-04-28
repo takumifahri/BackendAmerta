@@ -52,8 +52,8 @@ export const UPLOAD_CONFIG = {
     
     // Subdirectories for different file types
     SUBDIRS: {
-        MODEL_BAJU: 'model-baju',
-        CUSTOM_ORDER: 'custom-orders',
+        CHAT_IMAGE: 'chat-images',
+        EXCHANGE_ITEM: 'exchange-items',
         TRANSACTION: 'transactions',
         PROFILE: 'profiles'
     },
