@@ -6,7 +6,7 @@ const allowedOrigins = [
   'http://localhost:4200', // Angular default
   process.env.CLIENT_URL || 'http://localhost:3000',
   'https://amerta.takumifahri.my.id',
-  'https://amertaa.vercel.app',
+  'https://amertaa.netlify.app',
 ];
 
 const Cors_Settings: CorsOptions = {
