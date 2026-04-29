@@ -5,7 +5,8 @@ const allowedOrigins = [
   'http://localhost:5173', // Vite default
   'http://localhost:4200', // Angular default
   process.env.CLIENT_URL || 'http://localhost:3000',
-  'https://jrkonveksi.takumifahri.my.id'
+  'https://amerta.takumifahri.my.id',
+  'https://amertaa.vercel.app',
 ];
 
 const Cors_Settings: CorsOptions = {
