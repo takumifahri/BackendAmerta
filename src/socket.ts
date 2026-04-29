@@ -30,7 +30,11 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
     const subClient = pubClient.duplicate();
+    pubClient.on('connect', () => logger.info('Redis pub connected'));
+    pubClient.on('error', (err: Error) => logger.error('Redis pub error', { error: err.message }));
 
+    subClient.on('connect', () => logger.info('Redis sub connected'));
+    subClient.on('error', (err: Error) => logger.error('Redis sub error', { error: err.message }));
     const io = new SocketIOServer(httpServer, {
         cors: {
             origin: Cors_Settings.origin || '*',
@@ -43,7 +47,7 @@ export const initSocket = (httpServer: HttpServer) => {
     io.use((socket, next) => {
         const tokenFromAuth = socket.handshake.auth?.token as string | undefined;
         const authHeader = socket.handshake.headers.authorization as string | undefined;
-        
+
         // Try to get token from cookies
         let tokenFromCookie: string | undefined;
         const cookieHeader = socket.handshake.headers.cookie;
