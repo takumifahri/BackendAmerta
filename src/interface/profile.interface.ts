@@ -10,6 +10,7 @@ interface UserProfileResponse {
     phone? : string | null,
     address? : string | null,
     Role : Role,
+    
 
     // Detail Landmark
     longitude? : number | null,
@@ -18,6 +19,7 @@ interface UserProfileResponse {
     // Status
     is_verified : boolean,
     last_login? : Date | null,
+    points : number,
 
     createdAt : Date,
     updatedAt? : Date | null,

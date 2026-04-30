@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import ProfileController from '../controller/profile.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import { UploadMiddleware } from '../utils/file/multerConfig.js';
 
 const profile_router = Router();
 
@@ -195,5 +196,29 @@ profile_router.post('/reset-password/send-otp', ProfileController.sendChangePass
  *         description: Invalid or expired OTP/token
  */
 profile_router.post('/reset-password/verify-otp', ProfileController.verifyChangePasswordOTP);
+
+/**
+ * @swagger
+ * /api/profile/upload:
+ *   post:
+ *     summary: Upload profile picture
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile picture uploaded successfully
+ */
+profile_router.post('/upload', authenticate, UploadMiddleware.single('PROFILE', 'image'), ProfileController.uploadProfilePicture);
 
 export default profile_router;

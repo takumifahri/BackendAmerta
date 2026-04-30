@@ -39,6 +39,7 @@ class ProfileService implements IProfileService {
             latitude: user.latitude,
             is_verified: user.is_verified,
             last_login: user.last_login,
+            points: user.points || 0,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         };
@@ -62,6 +63,7 @@ class ProfileService implements IProfileService {
             latitude: updatedUser.latitude,
             is_verified: updatedUser.is_verified,
             last_login: updatedUser.last_login,
+            points: updatedUser.points || 0,
             createdAt: updatedUser.createdAt,
             updatedAt: updatedUser.updatedAt
         };

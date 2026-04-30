@@ -81,12 +81,36 @@ const verifyChangePasswordOTP = async (req: Request, res: Response, next: NextFu
     }
 };
 
+const uploadProfilePicture = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.userId;
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        // Return the relative path for storage
+        const fileUrl = `/storage/uploads/profiles/${file.filename}`;
+        
+        // Save to DB immediately
+        await profileService.updateProfile(userId, { profilePicture: fileUrl });
+
+        res.status(200).json({ 
+            message: "Profile picture updated successfully",
+            url: fileUrl 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const ProfileController = {
     getProfile,
     updateProfile,
     changePassword,
     sendChangePasswordOTP,
-    verifyChangePasswordOTP
+    verifyChangePasswordOTP,
+    uploadProfilePicture
 };
 
 export default ProfileController;
