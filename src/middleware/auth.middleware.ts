@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import JWTUtils from "../utils/jwt.utils.js";
 
-export type Role = "Admin" | "User" | "Manager";
-export const AdminRoles: Role[] = ["Admin", "Manager"];
-export const UserRoles: Role[] = ["User"];
+export type Role = "ADMIN" | "USER" | "COMPANY";
+export const AdminRoles: Role[] = ["ADMIN"];
+export const UserRoles: Role[] = ["USER", "COMPANY"];
 declare global {
   namespace Express {
     interface Request {
@@ -25,7 +25,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     const payload = JWTUtils.verifyToken(token, secret) as any;
     if (!payload || !payload.userId) return res.status(401).json({ message: "Invalid token" });
 
-    req.user = { userId: payload.userId, role: payload.role };
+    req.user = { userId: payload.userId, role: payload.role as Role };
     next();
   } catch (err) {
     return res.status(401).json({ message: "Unauthorized" });
@@ -34,9 +34,9 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
 export const checkRole = (allowedRoles: Role[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const roleFromReq = req.user?.role ?? (req.headers["x-user-role"] as string | undefined);
-    if (!roleFromReq) return res.status(403).json({ message: "Forbidden" });
-    if (!allowedRoles.includes(roleFromReq as Role)) return res.status(403).json({ message: "Forbidden" });
+    const roleFromReq = req.user?.role;
+    if (!roleFromReq) return res.status(403).json({ message: "Forbidden: No role found" });
+    if (!allowedRoles.includes(roleFromReq as Role)) return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
     next();
   };
 };

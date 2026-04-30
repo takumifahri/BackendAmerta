@@ -42,14 +42,16 @@ const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-                maxAge: 15 * 60 * 1000 // 15 minutes
+                maxAge: 60 * 60 * 1000, // 1 hour
+                path: '/'
             });
 
             res.cookie('refreshToken', result.refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                path: '/'
             });
         }
 
@@ -84,7 +86,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            maxAge: 15 * 60 * 1000 // 15 minutes
+            maxAge: 60 * 60 * 1000, // 1 hour
+            path: '/'
         });
 
         // Set refresh token cookie
@@ -92,7 +95,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
         });
 
         res.status(200).json(result);
@@ -134,16 +138,17 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
 const me = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
+        // Ambil token utamanya dari cookies
+        const token = req.cookies?.accessToken;
         
         if (!token) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'No access token found' });
         }
 
         const result = await AuthService.verifyToken(token);
         
         if (!result) {
-            return res.status(401).json({ message: 'Invalid or expired token' });
+            return res.status(401).json({ message: 'Invalid or expired session' });
         }
 
         res.status(200).json(result);
@@ -154,23 +159,25 @@ const me = async (req: Request, res: Response, next: NextFunction) => {
 
 const refresh = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
+        // Ambil refresh token langsung dari cookie saja
+        const refreshToken = req.cookies?.refreshToken;
 
         if (!refreshToken) {
-            return res.status(401).json({ message: 'Refresh token is missing' });
+            return res.status(401).json({ message: 'Session expired' });
         }
 
         const result = await AuthService.refresh(refreshToken);
 
-        // Set new access token cookie
+        // Rewrite accessToken saja di cookie
         res.cookie('accessToken', result.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            maxAge: 15 * 60 * 1000 // 15 minutes
+            maxAge: 24 * 60 * 60 * 1000, // Kita buat lebih lama (1 hari) agar stabil
+            path: '/'
         });
 
-        res.status(200).json(result);
+        res.status(200).json({ status: 'success', message: 'Token refreshed' });
     } catch (error) {
         next(error);
     }

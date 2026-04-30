@@ -1,7 +1,7 @@
 import { prisma } from '../database/index.js';
-import type{ CreatePostRequest } from '../interface/community.interface.js';
+import type{ CreatePostRequest, ICommunityRepository } from '../interface/community.interface.js';
 
-export class CommunityRepository {
+export class CommunityRepository implements ICommunityRepository {
     async findAll(type?: string) {
         return await prisma.communityPost.findMany({
             where: type ? { type: type as any } : {},
@@ -67,6 +67,7 @@ export class CommunityRepository {
                 latitude: data.latitude ?? null,
                 longitude: data.longitude ?? null,
                 authorId: data.authorId,
+                address: data.address ?? null,
                 images: {
                     create: data.images?.map(url => ({ url })) || []
                 }

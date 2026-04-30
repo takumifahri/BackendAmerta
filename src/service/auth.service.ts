@@ -110,7 +110,7 @@ class AuthService implements IAuthService {
 
         // Generate tokens
         const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
-        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '1d';
         const refreshTokenSecret = process.env.REFRESH_JWT_SECRET || 'your-refresh-secret-key';
         const refreshTokenExpiresIn = process.env.REFRESH_JWT_EXPIRES_IN || '7d';
 
@@ -191,7 +191,7 @@ class AuthService implements IAuthService {
 
         // Generate session tokens
         const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
-        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '1d';
         const refreshTokenSecret = process.env.REFRESH_JWT_SECRET || 'your-refresh-secret-key';
         const refreshTokenExpiresIn = process.env.REFRESH_JWT_EXPIRES_IN || '7d';
 
@@ -307,7 +307,7 @@ class AuthService implements IAuthService {
 
         // Generate new access token
         const accessTokenSecret = process.env.JWT_SECRET || 'your-secret-key';
-        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+        const accessTokenExpiresIn = process.env.JWT_EXPIRES_IN || '1d';
 
         const token = JWTUtils.generateToken(
             {

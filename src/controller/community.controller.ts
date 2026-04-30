@@ -26,7 +26,22 @@ export const getPostById = async (req: Request, res: Response, next: NextFunctio
 export const createPost = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const authorId = (req as any).user?.userId;
-        const result = await communityService.createPost({ ...req.body, authorId });
+        const files = req.files as Express.Multer.File[];
+        
+        // Sesuaikan dengan static path di app.ts yaitu /storage/uploads
+        const imageUrls = files?.map(file => `/storage/uploads/community-post/${file.filename}`) || [];
+
+        // Parsing data numerik dari FormData (yang selalu string)
+        const latitude = req.body.latitude ? parseFloat(req.body.latitude) : null;
+        const longitude = req.body.longitude ? parseFloat(req.body.longitude) : null;
+
+        const result = await communityService.createPost({ 
+            ...req.body, 
+            authorId,
+            latitude,
+            longitude,
+            images: imageUrls
+        });
         res.status(201).json(result);
     } catch (error) {
         next(error);

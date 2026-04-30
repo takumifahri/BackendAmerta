@@ -5,6 +5,7 @@ export interface CreatePostRequest {
     images?: string[];
     latitude?: number;
     longitude?: number;
+    address?: string;
     authorId: string;
 }
 
@@ -32,4 +33,17 @@ export interface CommentResponse {
         name: string;
     };
     createdAt: Date;
+}
+export interface ICommunityRepository {
+    findAll(type?: string): Promise<any[]>;
+    findById(id: string): Promise<any | null>;
+    create(data: CreatePostRequest): Promise<any>;
+    addComment(postId: string, userId: string, content: string): Promise<any>;
+}
+
+export interface ICommunityService {
+    getAllPosts(type?: string): Promise<any[]>;
+    getPostById(id: string): Promise<any | null>;
+    createPost(data: CreatePostRequest): Promise<any>;
+    addComment(postId: string, userId: string, content: string): Promise<any>;
 }

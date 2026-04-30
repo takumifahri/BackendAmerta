@@ -3,6 +3,8 @@ import auth_router from './auth.routes.js';
 import profile_router from './profile.routes.js';
 import chatRouter from './chat.routes.js';
 import community_router from './community.routes.js';
+import admin_router from './admin.routes.js';
+import donation_router from './donation.routes.js';
 // import kategori_model_baju_management_router from './admin/kategori_model_baju.management.routes.js';
 // import passwordRouter from './auth/password.routes.js';
 // import dashboard_router from './admin/dashboard.routes.js';
@@ -44,6 +46,10 @@ const groupedRoutes: Record<string, RouteGroup> = {
             path: '/community',
             router: community_router
         },
+        donation: {
+            path: '/donation',
+            router: donation_router
+        },
         // contacts: {
         //     path: '/contacts',
         //     router: contact_router,
@@ -68,40 +74,10 @@ const groupedRoutes: Record<string, RouteGroup> = {
     },
     admin: {
         path: '/admin',
-        // materials: {
-        //     // keep admin routes under an admin namespace; can change path if desired
-        //     path: '/materials',
-        //     router: material_router,
-        // },
-        // user: {
-        //     path: '/users',
-        //     router: admin_user_router,
-        // },
-        // custom_order: {
-        //     path: '/orders/custom',
-        //     router: custom_order_management_router,
-        // },
-        // model_baju: {
-        //     path: '/model-baju',
-        //     router: model_baju_management_router,
-        // },
-        // kategori_model_baju: {
-        //     path: '/kategori-model-baju',
-        //     router: kategori_model_baju_management_router,
-        // },
-        // dashboard: {
-        //     path: '/dashboard',
-        //     router: dashboard_router,
-        // },
-        // kasir : {
-        //     path: '/kasir',
-        //     router: kasir_router,
-        // },
-        // rekapitulasi : {
-        //     path: '/rekapitulasi',
-        //     router: rekapitulasi_router, // Ganti dengan router rekapitulasi yang sebenarnya
-        // }
-        // Tambahkan route admin lain di sini
+        management: {
+            path: '/management',
+            router: admin_router,
+        },
     },
     // Tambahkan group lain seperti 'user', 'internal', 'apiV2' dsb. Contoh:
     // user: {
