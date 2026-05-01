@@ -93,6 +93,24 @@ export class MarketplaceService implements IMarketplaceService {
             throw new HttpException(400, "Cart is empty or selected items not found");
         }
 
+        let discountAmount = 0;
+        if (data.userRewardId) {
+            const userReward = await prisma.userReward.findUnique({
+                where: { id: data.userRewardId },
+                include: { reward: true }
+            });
+
+            if (!userReward || userReward.userId !== userId || userReward.isUsed) {
+                throw new HttpException(400, "Voucher tidak valid atau sudah digunakan");
+            }
+
+            if (userReward.reward.type !== "VOUCHERS") {
+                throw new HttpException(400, "Reward ini bukan voucher belanja");
+            }
+
+            discountAmount = userReward.reward.value || 0;
+        }
+
         let totalPrice = 0;
         let totalPointsAwarded = 0;
         const itemsToOrder = [];
@@ -111,12 +129,23 @@ export class MarketplaceService implements IMarketplaceService {
             });
         }
 
+        const finalPrice = Math.max(0, totalPrice - discountAmount);
+
         const order = await this.marketplaceRepository.createOrder(userId, {
             ...data,
-            totalPrice,
+            totalPrice: finalPrice,
+            discountAmount,
             totalPointsAwarded,
             items: itemsToOrder
         });
+
+        // Mark voucher as used if applied
+        if (data.userRewardId) {
+            await prisma.userReward.update({
+                where: { id: data.userRewardId },
+                data: { isUsed: true, usedAt: new Date() }
+            });
+        }
 
         // Clear only selected items from cart
         for (const cartItem of cart) {

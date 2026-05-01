@@ -31,7 +31,7 @@ class PostManagementRepository implements IPostManagementRepository {
           },
           images: true,
           _count: {
-            select: { comments: true }
+            select: { comments: true, likes: true }
           }
         }
       }),

@@ -55,12 +55,19 @@ interface verifyChangePasswordOTPRequest {
     confirmation_password : string
 }
 
+interface redeemPointsRequest {
+    rewardId: number;
+    rewardTitle: string;
+    cost: number;
+}
+
 interface IProfileService {
     getProfile(userId : string) : Promise<UserProfileResponse>,
     updateProfile(userId : string, data : updateProfileRequest) : Promise<UserProfileResponse>,
     changePassword(userId : string, data : changePasswordRequest) : Promise<null>,
     sendChangePasswordOTP(data : sendChangePasswordOTPRequest) : Promise<{ verificationToken: string, message: string }>,
     verifyChangePasswordOTP(verificationToken: string, data : verifyChangePasswordOTPRequest) : Promise<{ message: string }>,
+    redeemPoints(userId: string, data: redeemPointsRequest): Promise<UserProfileResponse>;
 }
 
 export type {
@@ -69,5 +76,6 @@ export type {
     changePasswordRequest,
     sendChangePasswordOTPRequest,
     verifyChangePasswordOTPRequest,
+    redeemPointsRequest,
     IProfileService
 }

@@ -27,6 +27,7 @@ export interface CreateOrderRequest {
     phone: string;
     address: string;
     cartItemIds?: string[]; // Optional: if provided, only checkout these items
+    userRewardId?: string; // Optional: voucher to use
 }
 
 export interface OrderItemResponse {
@@ -45,6 +46,8 @@ export interface OrderResponse {
     paymentProof: string | null;
     status: MarketplaceOrderStatus;
     totalPointsAwarded: number;
+    discountAmount: number;
+    userRewardId: string | null;
     recipientName: string | null;
     phone: string | null;
     address: string | null;

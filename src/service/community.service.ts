@@ -51,4 +51,9 @@ export class CommunityService implements ICommunityService {
         logger.info(`Comment added successfully: ${comment.id}`);
         return comment;
     }
+
+    async toggleLike(postId: string, userId: string) {
+        logger.info(`Toggling like for post ${postId} by user ${userId}`);
+        return await this.communityRepository.toggleLike(postId, userId);
+    }
 }

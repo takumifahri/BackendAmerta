@@ -11,5 +11,6 @@ community_router.get('/:id', CommunityController.getPostById);
 // Protected routes
 community_router.post('/', authenticate, UploadMiddleware.multiple('COMMUNITY_POST', 'images'), CommunityController.createPost);
 community_router.post('/:id/comment', authenticate, CommunityController.addComment);
+community_router.post('/:id/like', authenticate, CommunityController.toggleLike);
 
 export default community_router;

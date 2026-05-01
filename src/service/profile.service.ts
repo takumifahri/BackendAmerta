@@ -1,10 +1,10 @@
-import type { 
+import type {
     IProfileService,
     UserProfileResponse,
     updateProfileRequest,
     changePasswordRequest,
     sendChangePasswordOTPRequest,
-    verifyChangePasswordOTPRequest 
+    verifyChangePasswordOTPRequest
 } from "../interface/profile.interface.js";
 
 import { prisma } from "../database/index.js";
@@ -18,8 +18,8 @@ import { Mailers } from "../mailer.service.js";
 
 class ProfileService implements IProfileService {
     constructor(
-        private profileRepository: ProfileRepository = new ProfileRepository()   
-    ) {}
+        private profileRepository: ProfileRepository = new ProfileRepository()
+    ) { }
 
     async getProfile(userId: string): Promise<UserProfileResponse> {
         const user = await this.profileRepository.getProfile(userId);
@@ -166,7 +166,7 @@ class ProfileService implements IProfileService {
             message: 'Password has been changed successfully.'
         };
     }
-    
+
     async searchUsers(query: string, currentUserId: string): Promise<any[]> {
         const users = await prisma.user.findMany({
             where: {
@@ -190,6 +190,38 @@ class ProfileService implements IProfileService {
         });
 
         return users;
+    }
+
+    async redeemPoints(userId: string, data: any): Promise<UserProfileResponse> {
+        const user = await this.profileRepository.getProfile(userId);
+        if (!user) {
+            throw new HttpException(404, 'User not found');
+        }
+
+        if ((user.points || 0) < data.cost) {
+            throw new HttpException(400, 'Insufficient points');
+        }
+
+        const updatedUser = await this.profileRepository.redeemPoints(userId, data.cost);
+        
+        logger.info('User redeemed points', { userId, reward: data.rewardTitle, cost: data.cost });
+
+        return {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            name: updatedUser.name ?? "",
+            profilePicture: updatedUser.profilePicture,
+            phone: updatedUser.phone,
+            address: updatedUser.address,
+            Role: updatedUser.role,
+            longitude: updatedUser.longitude,
+            latitude: updatedUser.latitude,
+            is_verified: updatedUser.is_verified,
+            last_login: updatedUser.last_login,
+            points: updatedUser.points || 0,
+            createdAt: updatedUser.createdAt,
+            updatedAt: updatedUser.updatedAt
+        };
     }
 
 }

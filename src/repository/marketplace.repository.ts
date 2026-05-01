@@ -24,9 +24,11 @@ export class MarketplaceRepository {
         address: string;
         totalPrice: number;
         totalPointsAwarded: number;
+        discountAmount: number;
+        userRewardId?: string;
         items: { itemId: string, quantity: number, priceAtPurchase: number, pointsAtPurchase: number }[]
     }) {
-        const { items, ...orderData } = data;
+        const { items, cartItemIds, ...orderData } = data as any;
         return await prisma.marketplaceOrder.create({
             data: {
                 ...orderData,

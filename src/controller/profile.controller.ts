@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import ProfileService from "../service/profile.service.js";
-import type { 
-    updateProfileRequest, 
-    changePasswordRequest, 
-    sendChangePasswordOTPRequest, 
-    verifyChangePasswordOTPRequest 
+import type {
+    updateProfileRequest,
+    changePasswordRequest,
+    sendChangePasswordOTPRequest,
+    verifyChangePasswordOTPRequest
 } from "../interface/profile.interface.js";
 import type { AuthenticatedUser } from "../interface/base.interface.js";
 
@@ -48,7 +48,7 @@ const changePassword = async (req: Request, res: Response, next: NextFunction) =
         const userId = (req as any).user.userId;
         const data: changePasswordRequest = req.body;
         await profileService.changePassword(userId, data);
-        res.status(200).json({ 
+        res.status(200).json({
             status: 200,
             success: true,
             message: "Password updated successfully",
@@ -73,7 +73,7 @@ const sendChangePasswordOTP = async (req: Request, res: Response, next: NextFunc
             maxAge: 10 * 60 * 1000 // 10 minutes
         });
 
-        res.status(200).json({ 
+        res.status(200).json({
             status: 200,
             success: true,
             message: result.message,
@@ -91,7 +91,7 @@ const verifyChangePasswordOTP = async (req: Request, res: Response, next: NextFu
         const verificationToken = req.cookies?.verificationToken || (req as any).headers?.['verification-token'];
 
         if (!verificationToken) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 status: 401,
                 success: false,
                 message: "Verification token is missing or expired",
@@ -122,7 +122,7 @@ const uploadProfilePicture = async (req: Request, res: Response, next: NextFunct
         const userId = (req as any).user.userId;
         const file = req.file;
         if (!file) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 status: 400,
                 success: false,
                 message: "No file uploaded",
@@ -133,11 +133,11 @@ const uploadProfilePicture = async (req: Request, res: Response, next: NextFunct
 
         // Return the relative path for storage
         const fileUrl = `/storage/uploads/profiles/${file.filename}`;
-        
+
         // Save to DB immediately
         const result = await profileService.updateProfile(userId, { profilePicture: fileUrl });
 
-        res.status(200).json({ 
+        res.status(200).json({
             status: 200,
             success: true,
             message: "Profile picture updated successfully",
@@ -169,6 +169,23 @@ const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const redeemPoints = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.userId;
+        const data = req.body;
+        const result = await profileService.redeemPoints(userId, data);
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Points redeemed successfully",
+            data: result,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 
 const ProfileController = {
@@ -178,7 +195,8 @@ const ProfileController = {
     sendChangePasswordOTP,
     verifyChangePasswordOTP,
     uploadProfilePicture,
-    searchUsers
+    searchUsers,
+    redeemPoints
 };
 
 

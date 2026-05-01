@@ -21,6 +21,6 @@ router.delete("/cart/:itemId", MarketplaceController.removeFromCart);
 // Checkout & Orders
 router.post("/checkout", MarketplaceController.checkout);
 router.get("/my-orders", MarketplaceController.getUserOrders);
-router.post("/orders/:orderId/payment", UploadMiddleware.single('PAYMENT_PROOF', 'image'), MarketplaceController.uploadPaymentProof);
+router.post("/orders/:orderId/payment", UploadMiddleware.single('TRANSACTION', 'image'), MarketplaceController.uploadPaymentProof);
 
 export default router;

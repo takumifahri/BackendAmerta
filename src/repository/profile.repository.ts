@@ -11,6 +11,7 @@ export interface IProfileRepository {
         latitude?: number | null;
     }): Promise<any>;
     changePassword(userId: string, newPassword: string): Promise<void>;
+    redeemPoints(userId: string, points: number): Promise<any>;
 }
 
 export class ProfileRepository implements IProfileRepository {
@@ -55,6 +56,17 @@ export class ProfileRepository implements IProfileRepository {
             data: {
                 password: newPassword
             },
+        });
+    }
+
+    async redeemPoints(userId: string, points: number) {
+        return await prisma.user.update({
+            where: { id: userId },
+            data: {
+                points: {
+                    decrement: points
+                }
+            }
         });
     }
 }

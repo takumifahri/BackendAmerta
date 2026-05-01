@@ -6,6 +6,8 @@ import community_router from './community.routes.js';
 import admin_router from './admin.routes.js';
 import donation_router from './donation.routes.js';
 import marketplace_router from './marketplace.routes.js';
+import public_router from './public.routes.js';
+import reward_router from './reward.routes.js';
 // import kategori_model_baju_management_router from './admin/kategori_model_baju.management.routes.js';
 // import passwordRouter from './auth/password.routes.js';
 // import dashboard_router from './admin/dashboard.routes.js';
@@ -54,6 +56,14 @@ const groupedRoutes: Record<string, RouteGroup> = {
         marketplace: {
             path: '/marketplace',
             router: marketplace_router
+        },
+        general: {
+            path: '/public',
+            router: public_router
+        },
+        rewards: {
+            path: '/rewards',
+            router: reward_router
         },
         // contacts: {
         //     path: '/contacts',

@@ -52,4 +52,42 @@ export class MarketplaceAdminRepository {
             }
         });
     }
+
+    async findAllItems() {
+        return await prisma.marketplaceItem.findMany({
+            where: { deletedAt: null },
+            include: { images: { select: { url: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async updateItem(id: string, data: any) {
+        const { images, ...itemData } = data;
+        return await prisma.$transaction(async (tx) => {
+            if (images) {
+                await tx.marketplaceItemImage.deleteMany({ where: { itemId: id } });
+                await tx.marketplaceItemImage.createMany({
+                    data: images.map((url: string) => ({ url, itemId: id }))
+                });
+            }
+            return await tx.marketplaceItem.update({
+                where: { id },
+                data: itemData,
+                include: { images: { select: { url: true } } }
+            });
+        });
+    }
+
+    async deleteItem(id: string) {
+        return await prisma.marketplaceItem.delete({
+            where: { id }
+        });
+    }
+
+    async softDeleteItem(id: string) {
+        return await prisma.marketplaceItem.update({
+            where: { id },
+            data: { deletedAt: new Date() }
+        });
+    }
 }

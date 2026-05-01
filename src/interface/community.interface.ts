@@ -39,6 +39,7 @@ export interface ICommunityRepository {
     findById(id: string): Promise<any | null>;
     create(data: CreatePostRequest): Promise<any>;
     addComment(postId: string, userId: string, content: string): Promise<any>;
+    toggleLike(postId: string, userId: string): Promise<{ liked: boolean }>;
 }
 
 export interface ICommunityService {
@@ -46,4 +47,5 @@ export interface ICommunityService {
     getPostById(id: string): Promise<any | null>;
     createPost(data: CreatePostRequest): Promise<any>;
     addComment(postId: string, userId: string, content: string): Promise<any>;
+    toggleLike(postId: string, userId: string): Promise<{ liked: boolean }>;
 }

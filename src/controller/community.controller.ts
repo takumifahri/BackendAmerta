@@ -59,3 +59,14 @@ export const addComment = async (req: Request, res: Response, next: NextFunction
         next(error);
     }
 };
+
+export const toggleLike = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const postId = req.params.id as string;
+        const userId = (req as any).user?.userId;
+        const result = await communityService.toggleLike(postId, userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};

@@ -221,5 +221,6 @@ profile_router.post('/reset-password/verify-otp', ProfileController.verifyChange
  */
 profile_router.post('/upload', authenticate, UploadMiddleware.single('PROFILE', 'image'), ProfileController.uploadProfilePicture);
 profile_router.get('/search', authenticate, ProfileController.searchUsers);
+profile_router.post('/redeem', authenticate, ProfileController.redeemPoints);
 
 export default profile_router;

@@ -141,7 +141,7 @@ export const uploadPaymentProof = async (req: Request, res: Response, next: Next
             });
         }
 
-        const proofUrl = `/storage/uploads/payments/${file.filename}`;
+        const proofUrl = `/storage/uploads/transactions/${file.filename}`;
         const order = await marketplaceService.uploadPaymentProof(orderId as string, userId, proofUrl);
         
         res.status(200).json({

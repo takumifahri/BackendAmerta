@@ -64,11 +64,13 @@ model User {
   // Community
   communityPosts CommunityPost[]
   communityComments Comment[]
+  communityLikes PostLike[]
 
   // Donation
   donations      Donation[]
   points         Int      @default(0)
   marketplaceOrders MarketplaceOrder[]
+  userRewards    UserReward[]
   cartItems      CartItem[]
 
   createdAt DateTime @default(now())
@@ -162,10 +164,25 @@ model CommunityPost {
   author    User     @relation(fields: [authorId], references: [id])
   
   comments  Comment[]
+  likes     PostLike[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
 }
 
 model PostImage {
@@ -281,6 +298,11 @@ model MarketplaceOrder {
   status          MarketplaceOrderStatus @default(PENDING)
   totalPointsAwarded Int      @default(0)
   
+  // Discount
+  discountAmount  Int      @default(0)
+  userRewardId    String?
+  userReward      UserReward? @relation(fields: [userRewardId], references: [id])
+  
   // Shipping Data
   recipientName   String?
   phone           String?
@@ -338,4 +360,42 @@ enum DonationStatus {
   COMPLETED
   CANCELLED
   ONGOING
-} 
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  cost        Int
+  type        String   
+  icon        String?  
+  color       String?  
+  tag         String?  
+  rarity      String   @default("Common")
+  isActive    Boolean  @default(true)
+  value       Int?     // value in Rp or points
+  
+  userRewards UserReward[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+}
+
+model UserReward {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  rewardId  String
+  reward    Reward   @relation(fields: [rewardId], references: [id])
+  
+  code      String?  @unique // unique code for the voucher
+  isUsed    Boolean  @default(false)
+  usedAt    DateTime?
+  
+  marketplaceOrders MarketplaceOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -32,14 +32,15 @@ export class MarketplaceAdminService implements IMarketplaceAdminService {
             select: { email: true, name: true }
         });
 
-        // If status is changed to COMPLETED, award points to user
-        if (status === MarketplaceOrderStatus.COMPLETED && order.status !== MarketplaceOrderStatus.COMPLETED) {
-            await prisma.$transaction(async (tx) => {
-                await tx.marketplaceOrder.update({
-                    where: { id: orderId },
-                    data: { status }
-                });
+        // Handle status transitions with side effects
+        await prisma.$transaction(async (tx) => {
+            await tx.marketplaceOrder.update({
+                where: { id: orderId },
+                data: { status }
+            });
 
+            // 1. Award points and decrement stock on COMPLETION
+            if (status === MarketplaceOrderStatus.COMPLETED && order.status !== MarketplaceOrderStatus.COMPLETED) {
                 await tx.user.update({
                     where: { id: order.userId },
                     data: { points: { increment: order.totalPointsAwarded } }
@@ -51,11 +52,20 @@ export class MarketplaceAdminService implements IMarketplaceAdminService {
                         data: { stock: { decrement: item.quantity } }
                     });
                 }
-            });
-            logger.info(`Order ${orderId} completed. Awarded ${order.totalPointsAwarded} points to user ${order.userId}`);
-        } else {
-            await this.adminRepository.updateOrderStatus(orderId, status);
-        }
+                logger.info(`Order ${orderId} completed. Awarded ${order.totalPointsAwarded} points to user ${order.userId}`);
+            }
+
+            // 2. Refund Voucher on REJECTION
+            if (status === MarketplaceOrderStatus.REJECTED && order.status !== MarketplaceOrderStatus.REJECTED) {
+                if (order.userRewardId) {
+                    await tx.userReward.update({
+                        where: { id: order.userRewardId },
+                        data: { isUsed: false, usedAt: null }
+                    });
+                    logger.info(`Order ${orderId} rejected. Voucher ${order.userRewardId} refunded to user.`);
+                }
+            }
+        });
 
         const updatedOrder = await this.adminRepository.findOrderById(orderId);
 
@@ -69,5 +79,21 @@ export class MarketplaceAdminService implements IMarketplaceAdminService {
         }
 
         return updatedOrder as any;
+    }
+
+    async getAllItems(): Promise<MarketplaceItemResponse[]> {
+        return await this.adminRepository.findAllItems() as any;
+    }
+
+    async updateItem(id: string, data: any): Promise<MarketplaceItemResponse> {
+        return await this.adminRepository.updateItem(id, data) as any;
+    }
+
+    async deleteItem(id: string): Promise<void> {
+        await this.adminRepository.deleteItem(id);
+    }
+
+    async softDeleteItem(id: string): Promise<MarketplaceItemResponse> {
+        return await this.adminRepository.softDeleteItem(id) as any;
     }
 }
