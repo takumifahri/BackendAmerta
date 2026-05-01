@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
-import { getRoomMessages, sendMessageREST, getRoomUsers, getUserRooms } from '../controller/chat.controller.js';
+import { getRoomMessages, sendMessageREST, getRoomUsers, getUserRooms, initiateChat } from '../controller/chat.controller.js';
 
 const chatRouter = Router();
 
@@ -342,5 +342,6 @@ chatRouter.get('/:roomId/users', authenticate, getRoomUsers);
  *                   example: "Failed to send message"
  */
 chatRouter.post('/send', authenticate, sendMessageREST);
+chatRouter.post('/rooms/initiate', authenticate, initiateChat);
 
 export default chatRouter;

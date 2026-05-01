@@ -17,7 +17,13 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 
         // Remove token from response body
         const { verificationToken, ...responseBody } = result;
-        res.status(200).json(responseBody);
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: result.message,
+            data: responseBody,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
@@ -29,7 +35,13 @@ const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
         const verificationToken = req.body.verificationToken || req.cookies?.verificationToken;
 
         if (!verificationToken) {
-            return res.status(400).json({ message: 'Verification token is missing or expired' });
+            return res.status(400).json({ 
+                status: 400,
+                success: false,
+                message: 'Verification token is missing or expired',
+                data: null,
+                timestamp: new Date().toISOString()
+            });
         }
 
         const result = await AuthService.verifyOTP(verificationToken, otp);
@@ -55,7 +67,13 @@ const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
             });
         }
 
-        res.status(201).json(result);
+        res.status(201).json({
+            status: 201,
+            success: true,
+            message: "OTP verified successfully",
+            data: result,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
@@ -66,11 +84,23 @@ const resendOTP = async (req: Request, res: Response, next: NextFunction) => {
         const { email } = req.body;
         
         if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
+            return res.status(400).json({ 
+                status: 400,
+                success: false,
+                message: 'Email is required',
+                data: null,
+                timestamp: new Date().toISOString()
+            });
         }
 
         const result = await AuthService.resendOTP(email);
-        res.status(200).json(result);
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: result.message,
+            data: null,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
@@ -99,7 +129,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             path: '/'
         });
 
-        res.status(200).json(result);
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Login successful",
+            data: result,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
@@ -128,8 +164,11 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
         });
 
         res.status(200).json({
-            status: 'success',
-            message: 'Logged out successfully'
+            status: 200,
+            success: true,
+            message: 'Logged out successfully',
+            data: null,
+            timestamp: new Date().toISOString()
         });
     } catch (error) {
         next(error);
@@ -142,16 +181,34 @@ const me = async (req: Request, res: Response, next: NextFunction) => {
         const token = req.cookies?.accessToken;
         
         if (!token) {
-            return res.status(401).json({ message: 'No access token found' });
+            return res.status(401).json({ 
+                status: 401,
+                success: false,
+                message: 'No access token found',
+                data: null,
+                timestamp: new Date().toISOString()
+            });
         }
 
         const result = await AuthService.verifyToken(token);
         
         if (!result) {
-            return res.status(401).json({ message: 'Invalid or expired session' });
+            return res.status(401).json({ 
+                status: 401,
+                success: false,
+                message: 'Invalid or expired session',
+                data: null,
+                timestamp: new Date().toISOString()
+            });
         }
 
-        res.status(200).json(result);
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "User session verified",
+            data: result,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
@@ -163,7 +220,13 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
         const refreshToken = req.cookies?.refreshToken;
 
         if (!refreshToken) {
-            return res.status(401).json({ message: 'Session expired' });
+            return res.status(401).json({ 
+                status: 401,
+                success: false,
+                message: 'Session expired',
+                data: null,
+                timestamp: new Date().toISOString()
+            });
         }
 
         const result = await AuthService.refresh(refreshToken);
@@ -177,11 +240,18 @@ const refresh = async (req: Request, res: Response, next: NextFunction) => {
             path: '/'
         });
 
-        res.status(200).json({ status: 'success', message: 'Token refreshed' });
+        res.status(200).json({ 
+            status: 200,
+            success: true,
+            message: 'Token refreshed',
+            data: null,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         next(error);
     }
 };
+
 
 const AuthController = {
     register,

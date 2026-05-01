@@ -30,12 +30,19 @@ interface isReadRequest{
     messageId: string;
     isRead: boolean;
 }
+
+interface InitiateChatRequest {
+    userId: string;
+    targetUserId: string;
+}
+
 interface IChatService {
     getAllMessages(roomId: string): Promise<RoomChatResponse>;
     sendMessage(data: ChatRequest): Promise<ChatResponse>;
     receiveMessage(data: ChatRequest): Promise<ChatResponse>;
     getUserRooms(userId: string): Promise<any[]>;
     isRead(data: isReadRequest): Promise<ChatResponse>;
+    getOrCreateRoom(data: InitiateChatRequest): Promise<any>;
 }
 
-export type { ChatRequest, ChatResponse, RoomChatResponse, IChatService, isReadRequest };
+export type { ChatRequest, ChatResponse, RoomChatResponse, IChatService, isReadRequest, InitiateChatRequest };

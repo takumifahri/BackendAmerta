@@ -138,6 +138,49 @@ class ChatService implements IChatService {
             throw new HttpException(500, 'Failed to mark message as read');
         }
     }
+
+    async getOrCreateRoom(data: { userId: string; targetUserId: string }): Promise<any> {
+        try {
+            const { userId, targetUserId } = data;
+
+            if (userId === targetUserId) {
+                throw new HttpException(400, 'Cannot chat with yourself');
+            }
+
+            // Get users roles
+            const [user, targetUser] = await Promise.all([
+                prisma.user.findUnique({ where: { id: userId } }),
+                prisma.user.findUnique({ where: { id: targetUserId } })
+            ]);
+
+            if (!user || !targetUser) {
+                throw new HttpException(404, 'User not found');
+            }
+
+            /**
+             * Rules:
+             * 1. USER can only chat to USER
+             * 2. COMPANY can chat to USER
+             * 3. COMPANY can chat to COMPANY (if user is COMPANY)
+             */
+            if (user.role === 'USER' && targetUser.role === 'COMPANY') {
+                throw new HttpException(403, 'Users cannot initiate chat with Companies');
+            }
+
+            // Check if room already exists
+            let room = await this.chatRepository.findRoomByUsers(userId, targetUserId);
+
+            if (!room) {
+                room = await this.chatRepository.createRoom(userId, targetUserId, 'USER');
+            }
+
+            return room;
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            logger.error('Error getting or creating room:', error);
+            throw new HttpException(500, 'Failed to get or create room');
+        }
+    }
 }
 
 export { ChatService };

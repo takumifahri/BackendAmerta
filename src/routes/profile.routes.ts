@@ -220,5 +220,6 @@ profile_router.post('/reset-password/verify-otp', ProfileController.verifyChange
  *         description: Profile picture uploaded successfully
  */
 profile_router.post('/upload', authenticate, UploadMiddleware.single('PROFILE', 'image'), ProfileController.uploadProfilePicture);
+profile_router.get('/search', authenticate, ProfileController.searchUsers);
 
 export default profile_router;

@@ -166,6 +166,32 @@ class ProfileService implements IProfileService {
             message: 'Password has been changed successfully.'
         };
     }
+    
+    async searchUsers(query: string, currentUserId: string): Promise<any[]> {
+        const users = await prisma.user.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { email: { contains: query, mode: 'insensitive' } }
+                ]
+                // For development, we allow searching all users including self
+                // NOT: { id: currentUserId },
+                // is_active: true
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                profilePicture: true,
+                is_active: true
+            },
+            take: 10
+        });
+
+        return users;
+    }
+
 }
 
 export default ProfileService;  

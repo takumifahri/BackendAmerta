@@ -10,6 +10,8 @@ export interface IChatRepository {
     }): Promise<any>;
     getMessageById(id: string): Promise<any>;
     updateMessage(id: string, data: any): Promise<any>;
+    findRoomByUsers(user1Id: string, user2Id: string): Promise<any>;
+    createRoom(user1Id: string, user2Id: string, type: 'USER' | 'MARKETPLACE' | 'DONATION'): Promise<any>;
 }
 
 export class ChatRepository implements IChatRepository {
@@ -52,6 +54,52 @@ export class ChatRepository implements IChatRepository {
         return await prisma.message.update({
             where: { id },
             data
+        });
+    }
+
+    async findRoomByUsers(user1Id: string, user2Id: string) {
+        const rooms = await prisma.chatRoom.findMany({
+            where: {
+                type: 'USER',
+                users: {
+                    some: { userId: user1Id }
+                }
+            },
+            include: {
+                users: true
+            }
+        });
+
+        return rooms.find(room => 
+            room.users.length === 2 && 
+            room.users.some(u => u.userId === user2Id)
+        );
+    }
+
+    async createRoom(user1Id: string, user2Id: string, type: 'USER' | 'MARKETPLACE' | 'DONATION' = 'USER') {
+        return await prisma.chatRoom.create({
+            data: {
+                type,
+                users: {
+                    create: [
+                        { userId: user1Id },
+                        { userId: user2Id }
+                    ]
+                }
+            },
+            include: {
+                users: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
         });
     }
 }
