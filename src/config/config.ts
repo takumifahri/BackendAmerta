@@ -57,7 +57,9 @@ export const UPLOAD_CONFIG = {
         TRANSACTION: 'transactions',
         PROFILE: 'profiles',
         DONATION_IMAGES: 'donation-images',
-        COMMUNITY_POST: 'community-post'
+        COMMUNITY_POST: 'community-post',
+        MARKETPLACE_ITEM: 'marketplace-items',
+        PAYMENT_PROOF: 'payment-proofs'
     },
     
     // File size limits (in bytes)
@@ -86,7 +88,9 @@ export const UPLOAD_CONFIG = {
         TRANSACTION: 3,
         PROFILE: 1,
         CHAT_IMAGE: 1,
-        EXCHANGE_ITEM: 5
+        EXCHANGE_ITEM: 5,
+        MARKETPLACE_ITEM: 10,
+        PAYMENT_PROOF: 1
     }
 } as const;
 

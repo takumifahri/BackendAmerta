@@ -136,21 +136,35 @@ app.use((req: Request, res: Response) => {
 });
 
 // Error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  logger.error('Unhandled error', {
-    error: err.message,
-    stack: err.stack,
-    method: req.method,
-    url: req.originalUrl,
-    body: req.body,
-    ip: req.ip,
-  });
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  const status = err.status || 500;
+  const message = err.message || 'Internal server error';
 
-  res.status(500).json({
-    status: 'error',
-    message: process.env.NODE_ENV === 'production'
+  if (status >= 500) {
+    logger.error('Unhandled error', {
+      error: message,
+      stack: err.stack,
+      method: req.method,
+      url: req.originalUrl,
+      body: req.body,
+      ip: req.ip,
+    });
+  } else {
+    logger.warn(`Client error: ${status}`, {
+      error: message,
+      method: req.method,
+      url: req.originalUrl,
+    });
+  }
+
+  res.status(status).json({
+    status: status,
+    success: false,
+    message: process.env.NODE_ENV === 'production' && status >= 500
       ? 'Internal server error'
-      : err.message,
+      : message,
+    data: null,
+    timestamp: new Date().toISOString()
   });
 });
 

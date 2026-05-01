@@ -129,6 +129,15 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             path: '/'
         });
 
+        // Set a non-httpOnly cookie for frontend detection
+        res.cookie('isLoggedIn', 'true', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/'
+        });
+
         res.status(200).json({
             status: 200,
             success: true,
@@ -160,6 +169,10 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/'
+        });
+
+        res.clearCookie('isLoggedIn', {
             path: '/'
         });
 

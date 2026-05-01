@@ -100,6 +100,8 @@ export const uploadConfigs = {
     communityPost: MulterConfigFactory.createImageUploader('COMMUNITY_POST'),
     transaction: MulterConfigFactory.createImageUploader('TRANSACTION'),
     profile: MulterConfigFactory.createImageUploader('PROFILE'),
+    marketplaceItem: MulterConfigFactory.createImageUploader('MARKETPLACE_ITEM'),
+    paymentProof: MulterConfigFactory.createImageUploader('PAYMENT_PROOF'),
 
     // Document uploaders (if needed)
     documents: {
@@ -127,6 +129,10 @@ export class UploadMiddleware {
                 return uploadConfigs.transaction.single(fieldName);
             case 'PROFILE':
                 return uploadConfigs.profile.single(fieldName);
+            case 'MARKETPLACE_ITEM':
+                return uploadConfigs.marketplaceItem.single(fieldName);
+            case 'PAYMENT_PROOF':
+                return uploadConfigs.paymentProof.single(fieldName);
             default:
                 throw new Error(`Unsupported category: ${category}`);
         }
@@ -148,6 +154,10 @@ export class UploadMiddleware {
                 return uploadConfigs.transaction.array(fieldName, maxFiles);
             case 'PROFILE':
                 return uploadConfigs.profile.array(fieldName, maxFiles);
+            case 'MARKETPLACE_ITEM':
+                return uploadConfigs.marketplaceItem.array(fieldName, maxFiles);
+            case 'PAYMENT_PROOF':
+                return uploadConfigs.paymentProof.array(fieldName, maxFiles);
             default:
                 throw new Error(`Unsupported category: ${category}`);
         }
@@ -167,6 +177,10 @@ export class UploadMiddleware {
                 return uploadConfigs.transaction.fields(fields);
             case 'PROFILE':
                 return uploadConfigs.profile.fields(fields);
+            case 'MARKETPLACE_ITEM':
+                return uploadConfigs.marketplaceItem.fields(fields);
+            case 'PAYMENT_PROOF':
+                return uploadConfigs.paymentProof.fields(fields);
             default:
                 throw new Error(`Unsupported category: ${category}`);
         }

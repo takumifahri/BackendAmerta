@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate, checkRole } from "../middleware/auth.middleware.js";
 import user_management_router from "./admin/user.management.routes.js";
 import post_management_router from "./admin/post.management.routes.js";
+import marketplace_management_router from "./admin/marketplace.management.routes.js";
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use(checkRole(["ADMIN"]));
 // Management Routes
 router.use("/users", user_management_router);
 router.use("/posts", post_management_router);
+router.use("/marketplace", marketplace_management_router);
 
 export default router;

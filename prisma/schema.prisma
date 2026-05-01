@@ -68,6 +68,8 @@ model User {
   // Donation
   donations      Donation[]
   points         Int      @default(0)
+  marketplaceOrders MarketplaceOrder[]
+  cartItems      CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime? @updatedAt
@@ -222,6 +224,96 @@ model DonationImage {
   createdAt   DateTime @default(now())
   updatedAt   DateTime? @updatedAt
   deletedAt   DateTime?
+}
+
+model MarketplaceItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @db.Text
+  price       Int
+  stock       Int      @default(0)
+  category    String?
+  points      Int      @default(0) // points awarded upon purchase
+  
+  images      MarketplaceItemImage[]
+  orderItems  MarketplaceOrderItem[]
+  cartItems   CartItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+}
+
+model MarketplaceItemImage {
+  id      String @id @default(uuid())
+  url     String
+  itemId  String
+  item    MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  itemId    String
+  item      MarketplaceItem @relation(fields: [itemId], references: [id])
+  
+  quantity  Int      @default(1)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, itemId])
+}
+
+model MarketplaceOrder {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  
+  items           MarketplaceOrderItem[]
+  
+  totalPrice      Int
+  paymentProof    String?  // Screenshot of payment
+  status          MarketplaceOrderStatus @default(PENDING)
+  totalPointsAwarded Int      @default(0)
+  
+  // Shipping Data
+  recipientName   String?
+  phone           String?
+  address         String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+}
+
+model MarketplaceOrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  itemId          String
+  item            MarketplaceItem @relation(fields: [itemId], references: [id])
+  
+  quantity        Int      @default(1)
+  priceAtPurchase Int
+  pointsAtPurchase Int
+  
+  createdAt       DateTime @default(now())
+}
+
+enum MarketplaceOrderStatus {
+  PENDING
+  VERIFYING
+  VERIFIED
+  REJECTED
+  SHIPPED
+  COMPLETED
+  CANCELLED
 }
 
 enum PostType {

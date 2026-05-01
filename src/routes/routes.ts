@@ -5,6 +5,7 @@ import chatRouter from './chat.routes.js';
 import community_router from './community.routes.js';
 import admin_router from './admin.routes.js';
 import donation_router from './donation.routes.js';
+import marketplace_router from './marketplace.routes.js';
 // import kategori_model_baju_management_router from './admin/kategori_model_baju.management.routes.js';
 // import passwordRouter from './auth/password.routes.js';
 // import dashboard_router from './admin/dashboard.routes.js';
@@ -49,6 +50,10 @@ const groupedRoutes: Record<string, RouteGroup> = {
         donation: {
             path: '/donation',
             router: donation_router
+        },
+        marketplace: {
+            path: '/marketplace',
+            router: marketplace_router
         },
         // contacts: {
         //     path: '/contacts',
