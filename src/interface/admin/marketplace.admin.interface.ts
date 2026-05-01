@@ -1,5 +1,5 @@
 import { MarketplaceOrderStatus } from "../../generated/prisma/enums.js";
-import { MarketplaceItemResponse, OrderResponse } from "../marketplace.interface.js";
+import type { MarketplaceItemResponse, OrderResponse } from "../marketplace.interface.js";
 
 export interface IMarketplaceAdminService {
     createItem(data: any): Promise<MarketplaceItemResponse>;
